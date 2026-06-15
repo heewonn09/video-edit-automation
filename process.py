@@ -153,3 +153,31 @@ def concat_clips(clip_paths, out_path):
     )
     list_path.unlink(missing_ok=True)
     return out_path
+
+
+def transcribe_audio(video_path, cfg, srt_path):
+    """Whisper로 한국어 전사 후 SRT 저장."""
+    import whisper
+
+    audio_path = Path(video_path).with_suffix(".wav")
+    subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-ar", "16000",
+            "-ac", "1",
+            "-c:a", "pcm_s16le",
+            str(audio_path),
+        ],
+        capture_output=True,
+        check=True,
+    )
+
+    model = whisper.load_model(cfg["whisper_model"])
+    result = model.transcribe(str(audio_path), language="ko")
+    audio_path.unlink(missing_ok=True)
+
+    srt_content = _segments_to_srt(result["segments"])
+    srt_path = Path(srt_path)
+    srt_path.write_text(srt_content, encoding="utf-8")
+    return srt_path

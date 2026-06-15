@@ -143,3 +143,30 @@ def test_concat_clips_writes_list_and_calls_ffmpeg(tmp_path):
     assert "-f" in cmd
     assert "concat" in cmd
     assert result == out_path
+
+
+def test_transcribe_audio_writes_srt(tmp_path):
+    from process import transcribe_audio
+
+    fake_video = tmp_path / "merged.mp4"
+    fake_video.touch()
+    srt_path = tmp_path / "subtitles.srt"
+    cfg = {"whisper_model": "medium"}
+
+    fake_segments = [
+        {"start": 0.0, "end": 2.0, "text": " 안녕하세요"},
+        {"start": 3.0, "end": 5.0, "text": " 반갑습니다"},
+    ]
+
+    with patch("subprocess.run") as mock_ffmpeg, \
+         patch("whisper.load_model") as mock_load:
+        mock_ffmpeg.return_value = MagicMock(returncode=0)
+        mock_load.return_value.transcribe.return_value = {"segments": fake_segments}
+
+        result = transcribe_audio(fake_video, cfg, srt_path)
+
+    assert result == srt_path
+    content = srt_path.read_text(encoding="utf-8")
+    assert "안녕하세요" in content
+    assert "반갑습니다" in content
+    assert "00:00:00,000 --> 00:00:02,000" in content
