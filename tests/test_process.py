@@ -43,3 +43,19 @@ def test_get_input_files_empty_dir(tmp_path):
     input_dir.mkdir()
     from process import get_input_files
     assert get_input_files(str(input_dir)) == []
+
+
+def test_segments_to_srt_basic():
+    from process import _segments_to_srt
+    segments = [
+        {"start": 0.0, "end": 2.5, "text": " 안녕하세요"},
+        {"start": 3.0, "end": 65.123, "text": " 반갑습니다"},
+    ]
+    srt = _segments_to_srt(segments)
+    assert "1\n00:00:00,000 --> 00:00:02,500\n안녕하세요" in srt
+    assert "2\n00:00:03,000 --> 00:01:05,123\n반갑습니다" in srt
+
+
+def test_segments_to_srt_empty():
+    from process import _segments_to_srt
+    assert _segments_to_srt([]) == ""
