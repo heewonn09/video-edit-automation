@@ -181,3 +181,30 @@ def transcribe_audio(video_path, cfg, srt_path):
     srt_path = Path(srt_path)
     srt_path.write_text(srt_content, encoding="utf-8")
     return srt_path
+
+
+def burn_subtitles(video_path, srt_path, out_path, cfg):
+    """SRT 자막을 영상에 burn-in."""
+    font = cfg["subtitle_font"]
+    size = cfg["subtitle_font_size"]
+
+    # Windows 경로의 콜론을 ffmpeg subtitles 필터 문법에 맞게 이스케이프
+    srt_escaped = str(srt_path).replace("\\", "/").replace(":", "\\:")
+
+    subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-vf",
+            (
+                f"subtitles='{srt_escaped}':force_style='"
+                f"FontName={font},FontSize={size},"
+                f"PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Outline=1'"
+            ),
+            "-c:a", "copy",
+            str(out_path),
+        ],
+        capture_output=True,
+        check=True,
+    )
+    return Path(out_path)

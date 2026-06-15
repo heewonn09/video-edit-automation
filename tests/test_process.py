@@ -170,3 +170,24 @@ def test_transcribe_audio_writes_srt(tmp_path):
     assert "안녕하세요" in content
     assert "반갑습니다" in content
     assert "00:00:00,000 --> 00:00:02,000" in content
+
+
+def test_burn_subtitles_calls_ffmpeg(tmp_path):
+    from process import burn_subtitles
+
+    video = tmp_path / "merged.mp4"
+    video.touch()
+    srt = tmp_path / "subtitles.srt"
+    srt.write_text("1\n00:00:00,000 --> 00:00:02,000\n테스트\n", encoding="utf-8")
+    out = tmp_path / "output.mp4"
+    cfg = {"subtitle_font": "Malgun Gothic", "subtitle_font_size": 24}
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        result = burn_subtitles(video, srt, out, cfg)
+
+    assert mock_run.call_count == 1
+    cmd = " ".join(mock_run.call_args[0][0])
+    assert "subtitles" in cmd
+    assert "Malgun Gothic" in cmd
+    assert result == out
