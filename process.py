@@ -208,3 +208,53 @@ def burn_subtitles(video_path, srt_path, out_path, cfg):
         check=True,
     )
     return Path(out_path)
+
+
+def main():
+    cfg = load_config()
+
+    input_files = get_input_files("input")
+    if not input_files:
+        print("input/ 폴더에 영상 파일이 없습니다. 영상을 넣고 다시 실행하세요.")
+        return
+
+    Path("output").mkdir(exist_ok=True)
+    temp_dir = Path("temp")
+    temp_dir.mkdir(exist_ok=True)
+
+    all_clips = []
+    for video in input_files:
+        print(f"[1/4] 무음 제거 중: {video.name}")
+        try:
+            segments = detect_voice_segments(video, cfg)
+            if not segments:
+                print(f"  경고: {video.name}에서 음성 구간 없음 — 스킵")
+                continue
+            clips = extract_segments(video, segments, temp_dir / video.stem)
+            all_clips.extend(clips)
+        except Exception as e:
+            print(f"  경고: {video.name} 처리 실패 ({e}) — 스킵")
+
+    if not all_clips:
+        print("처리할 클립이 없습니다.")
+        shutil.rmtree(temp_dir)
+        return
+
+    merged_path = temp_dir / "merged.mp4"
+    print("[2/4] 클립 연결 중...")
+    concat_clips(all_clips, merged_path)
+
+    srt_path = temp_dir / "subtitles.srt"
+    print("[3/4] 한국어 자막 생성 중 (Whisper)... (수 분 소요)")
+    transcribe_audio(merged_path, cfg, srt_path)
+
+    out_path = Path("output") / cfg["output_filename"]
+    print("[4/4] 자막 입히는 중...")
+    burn_subtitles(merged_path, srt_path, out_path, cfg)
+
+    shutil.rmtree(temp_dir)
+    print(f"\n완료! 결과물: {out_path}")
+
+
+if __name__ == "__main__":
+    main()

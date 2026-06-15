@@ -191,3 +191,41 @@ def test_burn_subtitles_calls_ffmpeg(tmp_path):
     assert "subtitles" in cmd
     assert "Malgun Gothic" in cmd
     assert result == out
+
+
+def test_main_no_input_files(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "input").mkdir()
+    (tmp_path / "output").mkdir()
+    (tmp_path / "config.json").write_text(json.dumps({}))
+
+    from process import main
+    main()
+
+    captured = capsys.readouterr()
+    assert "없습니다" in captured.out
+
+
+def test_main_full_pipeline(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    input_dir = tmp_path / "input"
+    input_dir.mkdir()
+    (input_dir / "001.mp4").touch()
+    (tmp_path / "output").mkdir()
+    (tmp_path / "config.json").write_text(json.dumps({}))
+
+    fake_segments = [{"start": 0.0, "end": 3.0, "text": " 테스트"}]
+
+    with patch("subprocess.run") as mock_run, \
+         patch("whisper.load_model") as mock_load, \
+         patch("shutil.rmtree") as mock_rmtree:
+
+        mock_run.return_value = MagicMock(stdout="5.0\n", stderr="", returncode=0)
+        mock_load.return_value.transcribe.return_value = {"segments": fake_segments}
+
+        from process import main
+        main()
+
+    # ffprobe + silencedetect + extract(1 segment) + concat + wav추출 + burn = 6번 이상
+    assert mock_run.call_count >= 6
+    assert mock_rmtree.called
