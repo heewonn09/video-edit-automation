@@ -1,0 +1,9 @@
+{
+  "silence_threshold": "-35dB",
+  "min_silence_duration": 0.5,
+  "silence_padding": 0.1,
+  "whisper_model": "medium",
+  "output_filename": "output.mp4",
+  "subtitle_font": "Malgun Gothic",
+  "subtitle_font_size": 24
+}
