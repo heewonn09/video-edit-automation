@@ -116,10 +116,14 @@ def extract_segments(video_path, segments, out_dir):
         subprocess.run(
             [
                 "ffmpeg", "-y",
-                "-i", str(video_path),
                 "-ss", str(start),
-                "-to", str(end),
-                "-c", "copy",
+                "-i", str(video_path),
+                "-t", str(round(end - start, 3)),
+                "-map", "0:v:0",
+                "-map", "0:a:0",
+                "-c:v", "libx264",
+                "-preset", "fast",
+                "-c:a", "aac",
                 str(out_path),
             ],
             capture_output=True,
@@ -137,7 +141,7 @@ def concat_clips(clip_paths, out_path):
 
     with open(list_path, "w", encoding="utf-8") as f:
         for p in clip_paths:
-            f.write(f"file '{Path(p).as_posix()}'\n")
+            f.write(f"file '{Path(p).resolve().as_posix()}'\n")
 
     subprocess.run(
         [
