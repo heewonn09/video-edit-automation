@@ -52,3 +52,53 @@ def get_input_files(input_dir="input"):
         if f.is_file() and f.suffix.lower() in SUPPORTED_EXTENSIONS
     ]
     return sorted(files, key=lambda f: f.name)
+
+
+def detect_voice_segments(video_path, cfg):
+    """ffmpeg silencedetect로 음성 구간 (start, end) 목록 반환."""
+    threshold = cfg["silence_threshold"]
+    min_dur = cfg["min_silence_duration"]
+    padding = cfg["silence_padding"]
+
+    probe = subprocess.run(
+        [
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            str(video_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    duration = float(probe.stdout.strip())
+
+    result = subprocess.run(
+        [
+            "ffmpeg", "-i", str(video_path),
+            "-af", f"silencedetect=noise={threshold}:d={min_dur}",
+            "-f", "null", "-",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    output = result.stderr
+
+    silence_starts = [float(x) for x in re.findall(r"silence_start: (\d+\.?\d*)", output)]
+    silence_ends = [float(x) for x in re.findall(r"silence_end: (\d+\.?\d*)", output)]
+
+    silences = [
+        (max(0.0, s - padding), min(duration, e + padding))
+        for s, e in zip(silence_starts, silence_ends)
+    ]
+
+    voice_segments = []
+    cursor = 0.0
+    for s_start, s_end in silences:
+        if s_start > cursor + 0.05:
+            voice_segments.append((round(cursor, 3), round(s_start, 3)))
+        cursor = s_end
+    if duration - cursor > 0.05:
+        voice_segments.append((round(cursor, 3), round(duration, 3)))
+
+    return voice_segments
