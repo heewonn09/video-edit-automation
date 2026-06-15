@@ -102,3 +102,54 @@ def detect_voice_segments(video_path, cfg):
         voice_segments.append((round(cursor, 3), round(duration, 3)))
 
     return voice_segments
+
+
+def extract_segments(video_path, segments, out_dir):
+    """각 음성 구간을 개별 mp4 클립으로 추출."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stem = Path(video_path).stem
+    clip_paths = []
+
+    for i, (start, end) in enumerate(segments):
+        out_path = out_dir / f"{stem}_seg{i:04d}.mp4"
+        subprocess.run(
+            [
+                "ffmpeg", "-y",
+                "-i", str(video_path),
+                "-ss", str(start),
+                "-to", str(end),
+                "-c", "copy",
+                str(out_path),
+            ],
+            capture_output=True,
+            check=True,
+        )
+        clip_paths.append(out_path)
+
+    return clip_paths
+
+
+def concat_clips(clip_paths, out_path):
+    """ffmpeg concat demuxer로 클립들을 하나로 연결."""
+    out_path = Path(out_path)
+    list_path = out_path.parent / "concat_list.txt"
+
+    with open(list_path, "w", encoding="utf-8") as f:
+        for p in clip_paths:
+            f.write(f"file '{Path(p).as_posix()}'\n")
+
+    subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", str(list_path),
+            "-c", "copy",
+            str(out_path),
+        ],
+        capture_output=True,
+        check=True,
+    )
+    list_path.unlink(missing_ok=True)
+    return out_path

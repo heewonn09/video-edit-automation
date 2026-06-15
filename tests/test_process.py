@@ -109,3 +109,37 @@ def test_detect_voice_segments_no_silence(tmp_path):
     assert len(segments) == 1
     assert abs(segments[0][0] - 0.0) < 0.01
     assert abs(segments[0][1] - 5.0) < 0.01
+
+
+def test_extract_segments_calls_ffmpeg_per_segment(tmp_path):
+    from process import extract_segments
+
+    fake_video = tmp_path / "clip.mp4"
+    fake_video.touch()
+    segments = [(0.0, 2.0), (5.0, 8.0)]
+    out_dir = tmp_path / "clips"
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        paths = extract_segments(fake_video, segments, out_dir)
+
+    assert mock_run.call_count == 2
+    assert len(paths) == 2
+    assert paths[0].suffix == ".mp4"
+
+
+def test_concat_clips_writes_list_and_calls_ffmpeg(tmp_path):
+    from process import concat_clips
+
+    clips = [tmp_path / "a.mp4", tmp_path / "b.mp4"]
+    out_path = tmp_path / "merged.mp4"
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0)
+        result = concat_clips(clips, out_path)
+
+    assert mock_run.call_count == 1
+    cmd = mock_run.call_args[0][0]
+    assert "-f" in cmd
+    assert "concat" in cmd
+    assert result == out_path
