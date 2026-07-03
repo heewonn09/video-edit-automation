@@ -8,6 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from shortform.script_generator import generate_script
+from shortform.pipeline import render_script
 
 
 def _slugify(title: str) -> str:
@@ -21,6 +22,7 @@ def main(argv=None):
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--topic", help="주제/아이디어 텍스트")
     group.add_argument("--url", help="크롤링할 URL")
+    parser.add_argument("--assets", default=None, help="씬 매칭에 사용할 로컬 자산 폴더 (선택)")
     args = parser.parse_args(argv)
 
     raw_input = args.topic if args.topic else args.url
@@ -28,7 +30,8 @@ def main(argv=None):
 
     out_dir = Path("output") / "scripts"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"script_{_slugify(script.title)}.json"
+    slug = _slugify(script.title)
+    out_path = out_dir / f"script_{slug}.json"
     out_path.write_text(
         json.dumps(asdict(script), ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -38,7 +41,10 @@ def main(argv=None):
     for scene in script.scenes:
         print(f"  [씬 {scene.index}] ({scene.duration_hint_sec}s) {scene.narration}")
         print(f"    연출: {scene.visual_description}")
-    print(f"\n저장 위치: {out_path}")
+    print(f"\n스크립트 저장 위치: {out_path}")
+
+    video_path = render_script(script, Path("output") / f"{slug}.mp4", args.assets)
+    print(f"영상 저장 위치: {video_path}")
 
 
 if __name__ == "__main__":
