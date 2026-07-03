@@ -3,3 +3,4 @@ __pycache__/
 *.pyo
 temp/
 .pytest_cache/
+.env

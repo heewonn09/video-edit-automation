@@ -1,1 +1,5 @@
 openai-whisper
+anthropic
+requests
+trafilatura
+python-dotenv
