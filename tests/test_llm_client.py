@@ -2,7 +2,8 @@ from unittest.mock import patch, MagicMock
 from shortform.llm_client import generate_script_json
 
 @patch("shortform.llm_client.anthropic.Anthropic")
-def test_generate_script_json_extracts_tool_use_input(mock_anthropic_cls):
+def test_generate_script_json_extracts_tool_use_input(mock_anthropic_cls, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     fake_block = MagicMock(type="tool_use", input={"title": "t", "scenes": []})
     mock_client = MagicMock()
     mock_client.messages.create.return_value = MagicMock(content=[fake_block])
