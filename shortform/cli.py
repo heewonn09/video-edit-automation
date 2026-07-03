@@ -5,6 +5,8 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from shortform.script_generator import generate_script
 
 
@@ -14,6 +16,7 @@ def _slugify(title: str) -> str:
 
 
 def main(argv=None):
+    load_dotenv()
     parser = argparse.ArgumentParser(description="AI 숏폼 스크립트 생성기")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--topic", help="주제/아이디어 텍스트")
