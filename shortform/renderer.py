@@ -37,3 +37,25 @@ def build_scene_clip(media_path, media_type, audio_path, duration, out_path):
 
     subprocess.run(cmd, capture_output=True, check=True)
     return out_path
+
+
+def build_srt_from_scenes(scenes, durations) -> str:
+    segments = []
+    cursor = 0.0
+    for scene, duration in zip(scenes, durations):
+        segments.append({"start": cursor, "end": cursor + duration, "text": scene.narration})
+        cursor += duration
+    return _segments_to_srt(segments)
+
+
+def assemble_final_video(scene_clip_paths, srt_text, out_path, cfg):
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    merged_path = out_path.parent / "merged.mp4"
+    concat_clips(scene_clip_paths, merged_path)
+
+    srt_path = out_path.parent / "subtitles.srt"
+    srt_path.write_text(srt_text, encoding="utf-8")
+
+    return burn_subtitles(merged_path, srt_path, out_path, cfg)
