@@ -12,7 +12,7 @@ class AssetInfo:
     kind: str
 
 
-def list_assets(folder) -> list:
+def list_assets(folder) -> list[AssetInfo]:
     folder = Path(folder)
     if not folder.exists():
         return []
