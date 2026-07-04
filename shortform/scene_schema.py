@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -7,6 +7,7 @@ class Scene:
     narration: str
     visual_description: str
     duration_hint_sec: float
+    highlight_words: list = field(default_factory=list)
 
 
 @dataclass
