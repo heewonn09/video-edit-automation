@@ -12,6 +12,7 @@ def test_build_scene_clip_handles_image(mock_run, tmp_path):
     mock_run.assert_called_once()
     cmd = mock_run.call_args[0][0]
     assert "-loop" in cmd
+    assert any("zoompan" in str(arg) for arg in cmd)
     assert result == out_path
 
 

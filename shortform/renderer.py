@@ -12,13 +12,21 @@ def build_scene_clip(media_path, media_type, audio_path, duration, out_path):
     out_path = Path(out_path)
 
     if media_type == "image":
+        frame_count = max(1, int(duration * 30))
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1", "-i", media_path,
             "-i", audio_path,
-            "-vf", SCALE_FILTER,
-            "-r", "30",
-            "-c:v", "libx264", "-tune", "stillimage", "-pix_fmt", "yuv420p",
+            "-filter_complex",
+            (
+                "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,"
+                "crop=1080:1920,scale=8000:-2,"
+                f"zoompan=z='min(zoom+0.0015,1.5)':d={frame_count}:"
+                "x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,"
+                "format=yuv420p[v]"
+            ),
+            "-map", "[v]", "-map", "1:a",
+            "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p",
             "-c:a", "aac", "-b:a", "192k",
             "-t", str(duration),
             str(out_path),
