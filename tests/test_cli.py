@@ -1,6 +1,7 @@
 import json
+from pathlib import Path
 from unittest.mock import patch
-from shortform.cli import main
+from shortform.cli import main, _slugify
 from shortform.scene_schema import Script, Scene
 
 
@@ -8,11 +9,14 @@ from shortform.scene_schema import Script, Scene
 @patch("shortform.cli.generate_script")
 def test_cli_writes_script_json_and_renders_video(mock_generate, mock_render, tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
-    mock_generate.return_value = Script(
+    script = Script(
         title="테스트 제목",
         scenes=[Scene(1, "나레이션", "연출", 5.0)],
     )
-    mock_render.return_value = tmp_path / "output" / "테스트_제목.mp4"
+    mock_generate.return_value = script
+    expected_slug = _slugify("테스트 제목")
+    expected_video_path = tmp_path / "output" / f"{expected_slug}.mp4"
+    mock_render.return_value = expected_video_path
 
     main(["--topic", "테스트 주제", "--assets", "my_assets"])
 
@@ -22,10 +26,15 @@ def test_cli_writes_script_json_and_renders_video(mock_generate, mock_render, tm
     assert saved["title"] == "테스트 제목"
 
     mock_render.assert_called_once()
-    assert mock_render.call_args[0][2] == "my_assets"
+    # Assert all three arguments to render_script
+    assert mock_render.call_args[0][0] is script  # Script object
+    assert mock_render.call_args[0][1] == Path("output") / f"{expected_slug}.mp4"  # output path
+    assert mock_render.call_args[0][2] == "my_assets"  # assets path
 
     captured = capsys.readouterr()
     assert "테스트 제목" in captured.out
+    # Assert that the video path from render_script return value appears in output
+    assert str(expected_video_path) in captured.out
 
 
 def test_cli_requires_topic_or_url(capsys):
