@@ -85,3 +85,51 @@ def burn_ass_subtitles(video_path, ass_path, out_path):
     ]
     subprocess.run(cmd, capture_output=True, check=True)
     return out_path
+
+
+def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, transition_duration=0.5):
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    merged_path = out_path.parent / "merged.mp4"
+
+    n = len(scene_clip_paths)
+    if n == 1:
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(scene_clip_paths[0]),
+            "-c", "copy",
+            str(merged_path),
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+    else:
+        inputs = []
+        for p in scene_clip_paths:
+            inputs += ["-i", str(p)]
+
+        filter_parts = []
+        cursor = durations[0]
+        v_label, a_label = "0:v", "0:a"
+        for i in range(1, n):
+            offset = cursor - transition_duration
+            v_out, a_out = f"v{i}", f"a{i}"
+            filter_parts.append(
+                f"[{v_label}][{i}:v]xfade=transition=fade:duration={transition_duration}:offset={offset}[{v_out}]"
+            )
+            filter_parts.append(f"[{a_label}][{i}:a]acrossfade=d={transition_duration}[{a_out}]")
+            v_label, a_label = v_out, a_out
+            cursor += durations[i] - transition_duration
+        filter_complex = ";".join(filter_parts)
+
+        cmd = [
+            "ffmpeg", "-y",
+            *inputs,
+            "-filter_complex", filter_complex,
+            "-map", f"[{v_label}]", "-map", f"[{a_label}]",
+            "-c:v", "libx264", "-c:a", "aac",
+            str(merged_path),
+        ]
+        subprocess.run(cmd, capture_output=True, check=True)
+
+    ass_path = out_path.parent / "captions.ass"
+    ass_path.write_text(ass_text, encoding="utf-8")
+    return burn_ass_subtitles(merged_path, ass_path, out_path)
