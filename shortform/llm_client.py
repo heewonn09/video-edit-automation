@@ -41,7 +41,7 @@ def _call_anthropic(client, model, prompt):
     )
     tool_use_block = next(b for b in response.content if b.type == "tool_use")
     data = tool_use_block.input
-    if "title" not in data or "scenes" not in data:
+    if "scenes" not in data:
         raise ValueError(f"LLM 응답에 필수 필드가 누락되었습니다: {list(data.keys())}")
     return data
 

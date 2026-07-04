@@ -29,8 +29,12 @@ def generate_script(raw_input: str) -> Script:
     if input_type == "url":
         article = fetch_article(raw_input)
         prompt = ARTICLE_PROMPT_TEMPLATE.format(title=article.title, text=article.text)
+        fallback_title = article.title
     else:
         prompt = TOPIC_PROMPT_TEMPLATE.format(topic=raw_input)
+        fallback_title = raw_input
 
     data = generate_script_json(prompt)
+    if not data.get("title"):
+        data["title"] = fallback_title
     return script_from_dict(data)

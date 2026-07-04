@@ -36,3 +36,24 @@ def test_generate_script_from_url(mock_fetch, mock_llm):
     prompt_arg = mock_llm.call_args[0][0]
     assert "본문 내용" in prompt_arg
     assert script.title == "T2"
+
+
+@patch("shortform.script_generator.generate_script_json")
+def test_generate_script_falls_back_to_topic_when_title_missing(mock_llm):
+    mock_llm.return_value = {"scenes": [
+        {"index": 1, "narration": "n", "visual_description": "v", "duration_hint_sec": 5}
+    ]}
+    script = generate_script("강아지 산책 꿀팁")
+    assert script.title == "강아지 산책 꿀팁"
+
+
+@patch("shortform.script_generator.generate_script_json")
+@patch("shortform.script_generator.fetch_article")
+def test_generate_script_falls_back_to_article_title_when_title_missing(mock_fetch, mock_llm):
+    from shortform.crawler import ArticleContent
+    mock_fetch.return_value = ArticleContent(title="원본 기사 제목", text="본문 내용")
+    mock_llm.return_value = {"scenes": []}
+
+    script = generate_script("https://example.com/news/1")
+
+    assert script.title == "원본 기사 제목"

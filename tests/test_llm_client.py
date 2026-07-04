@@ -40,9 +40,9 @@ def test_generate_script_json_retries_on_transient_error(mock_anthropic_cls, mon
 
 
 @patch("shortform.llm_client.anthropic.Anthropic")
-def test_generate_script_json_retries_when_required_field_missing(mock_anthropic_cls, monkeypatch):
+def test_generate_script_json_retries_when_scenes_missing(mock_anthropic_cls, monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    incomplete_block = MagicMock(type="tool_use", input={"scenes": []})
+    incomplete_block = MagicMock(type="tool_use", input={"title": "t"})
     complete_block = MagicMock(type="tool_use", input={"title": "t", "scenes": []})
     mock_client = MagicMock()
     mock_client.messages.create.side_effect = [
@@ -55,6 +55,20 @@ def test_generate_script_json_retries_when_required_field_missing(mock_anthropic
 
     assert result == {"title": "t", "scenes": []}
     assert mock_client.messages.create.call_count == 2
+
+
+@patch("shortform.llm_client.anthropic.Anthropic")
+def test_generate_script_json_accepts_response_missing_title(mock_anthropic_cls, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    fake_block = MagicMock(type="tool_use", input={"scenes": []})
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = MagicMock(content=[fake_block])
+    mock_anthropic_cls.return_value = mock_client
+
+    result = generate_script_json("프롬프트")
+
+    assert result == {"scenes": []}
+    assert mock_client.messages.create.call_count == 1
 
 
 def test_script_tool_schema_includes_highlight_words():
