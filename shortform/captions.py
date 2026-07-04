@@ -20,7 +20,7 @@ HIGHLIGHT_OVERRIDE = r"{\1c&H00D7FF&}"
 RESET_OVERRIDE = r"{\r}"
 FADE_IN = r"{\fad(200,0)}"
 
-_PHRASE_BOUNDARY = re.compile(r"(?<=[,.!?])\s*")
+_PHRASE_BOUNDARY = re.compile(r"(?<=[,.!?])\s+")
 
 
 def _fmt_ass_time(t: float) -> str:

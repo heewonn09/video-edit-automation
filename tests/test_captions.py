@@ -68,3 +68,12 @@ def test_build_ass_treats_narration_without_punctuation_as_single_phrase():
     assert ass.count("Dialogue:") == 1
     assert "0:00:00.00,0:00:05.00" in ass
     assert "문장부호가 없는 나레이션" in ass
+
+
+def test_build_ass_does_not_create_phantom_punctuation_only_phrases():
+    scenes = [Scene(1, "정말... 그래요.", "v", 5.0)]
+    ass = build_ass_from_scenes(scenes, [5.0])
+
+    assert ass.count("Dialogue:") == 2
+    assert "정말..." in ass
+    assert "그래요." in ass

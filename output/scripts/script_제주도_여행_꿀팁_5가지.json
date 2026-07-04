@@ -1,0 +1,79 @@
+{
+  "title": "제주도 여행 꿀팁 5가지",
+  "scenes": [
+    {
+      "index": 1,
+      "narration": "제주도 여행, 이것만 알면 완전 꿀팁!",
+      "visual_description": "제주 해안도로를 드론으로 촬영한 시원한 항공샷, 파란 하늘과 바다가 대비되는 화면으로 시작, 텍스트 '제주도 꿀팁 5가지' 자막 등장",
+      "duration_hint_sec": 4,
+      "highlight_words": [
+        "제주도",
+        "꿀팁"
+      ]
+    },
+    {
+      "index": 2,
+      "narration": "첫째, 렌트카는 미리 예약해야 반값에 빌릴 수 있어요.",
+      "visual_description": "공항 렌트카 부스 앞 예약 화면 클로즈업, 스마트폰으로 예약 앱 스크롤하는 손 클로즈업, 가격 비교 그래픽 오버레이",
+      "duration_hint_sec": 6,
+      "highlight_words": [
+        "렌트카",
+        "반값",
+        "예약"
+      ]
+    },
+    {
+      "index": 3,
+      "narration": "둘째, 오설록 티뮤지엄은 오전 일찍 가야 인생샷 건질 수 있어요.",
+      "visual_description": "초록 녹차밭 전경, 이른 아침 햇살 속 인물이 여유롭게 걷는 모습, 카메라로 사진 찍는 컷 삽입",
+      "duration_hint_sec": 6,
+      "highlight_words": [
+        "오설록",
+        "인생샷",
+        "오전"
+      ]
+    },
+    {
+      "index": 4,
+      "narration": "셋째, 흑돼지는 관광지보다 로컬 맛집이 훨씬 저렴하고 맛있어요.",
+      "visual_description": "지글지글 흑돼지 굽는 클로즈업, 현지 식당 간판과 골목길 컷, 만족스러운 표정으로 먹는 사람들",
+      "duration_hint_sec": 6,
+      "highlight_words": [
+        "흑돼지",
+        "로컬 맛집",
+        "저렴"
+      ]
+    },
+    {
+      "index": 5,
+      "narration": "넷째, 우도는 배 시간표를 꼭 확인하고 여유 있게 움직이세요.",
+      "visual_description": "우도행 배 위에서 바라본 에메랄드빛 바다, 배 시간표 안내판 클로즈업, 자전거 타는 여행객 컷",
+      "duration_hint_sec": 6,
+      "highlight_words": [
+        "우도",
+        "배 시간표"
+      ]
+    },
+    {
+      "index": 6,
+      "narration": "다섯째, 일몰은 성산일출봉보다 협재해수욕장이 훨씬 감성적이에요.",
+      "visual_description": "협재해수욕장 노을 지는 풍경, 잔잔한 파도와 실루엣으로 걷는 사람, 따뜻한 색감의 필터 적용",
+      "duration_hint_sec": 6,
+      "highlight_words": [
+        "일몰",
+        "협재해수욕장",
+        "감성"
+      ]
+    },
+    {
+      "index": 7,
+      "narration": "이 5가지만 챙기면 제주 여행, 훨씬 알차진다!",
+      "visual_description": "지금까지 나온 장면들 빠르게 몽타주로 재생, 마지막에 '저장해두고 써먹기!' 자막과 함께 하트 이모지 애니메이션",
+      "duration_hint_sec": 5,
+      "highlight_words": [
+        "5가지",
+        "알차진다"
+      ]
+    }
+  ]
+}

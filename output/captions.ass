@@ -1,0 +1,22 @@
+[Script Info]
+Title: Shortform Captions
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Malgun Gothic,72,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,1,0,0,0,100,100,0,0,1,4,0,2,60,60,120,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+Dialogue: 0,0:00:00.00,0:00:03.41,Default,,0,0,0,,{\1c&H000000&\3c&H00D7FF&\bord14\shad0}제주도{\r} 여행, 이것만 알면 완전 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}꿀팁{\r}!
+Dialogue: 0,0:00:03.41,0:00:08.02,Default,,0,0,0,,첫째, {\1c&H000000&\3c&H00D7FF&\bord14\shad0}렌트카{\r}는 미리 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}예약{\r}해야 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}반값{\r}에 빌릴 수 있어요.
+Dialogue: 0,0:00:08.02,0:00:13.36,Default,,0,0,0,,둘째, {\1c&H000000&\3c&H00D7FF&\bord14\shad0}오설록{\r} 티뮤지엄은 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}오전{\r} 일찍 가야 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}인생샷{\r} 건질 수 있어요.
+Dialogue: 0,0:00:13.36,0:00:18.74,Default,,0,0,0,,셋째, {\1c&H000000&\3c&H00D7FF&\bord14\shad0}흑돼지{\r}는 관광지보다 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}로컬 맛집{\r}이 훨씬 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}저렴{\r}하고 맛있어요.
+Dialogue: 0,0:00:18.74,0:00:24.02,Default,,0,0,0,,넷째, {\1c&H000000&\3c&H00D7FF&\bord14\shad0}우도{\r}는 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}배 시간표{\r}를 꼭 확인하고 여유 있게 움직이세요.
+Dialogue: 0,0:00:24.02,0:00:29.76,Default,,0,0,0,,다섯째, {\1c&H000000&\3c&H00D7FF&\bord14\shad0}일몰{\r}은 성산일출봉보다 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}협재해수욕장{\r}이 훨씬 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}감성{\r}적이에요.
+Dialogue: 0,0:00:29.76,0:00:34.73,Default,,0,0,0,,이 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}5가지{\r}만 챙기면 제주 여행, 훨씬 {\1c&H000000&\3c&H00D7FF&\bord14\shad0}알차진다{\r}!
