@@ -25,7 +25,7 @@ def test_build_ass_highlights_matching_word():
     scenes = [Scene(1, "70만원이나 저렴해요", "v", 5.0, highlight_words=["70만원"])]
     ass = build_ass_from_scenes(scenes, [5.0])
 
-    assert r"{\1c&H00D7FF&\3c&H00D7FF&\bord14\shad0}70만원{\r}" in ass
+    assert r"{\1c&H000000&\3c&H00D7FF&\bord14\shad0}70만원{\r}" in ass
     assert "이나 저렴해요" in ass
 
 

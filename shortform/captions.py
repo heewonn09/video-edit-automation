@@ -14,7 +14,7 @@ Style: Default,Malgun Gothic,72,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,1,0,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
-HIGHLIGHT_OVERRIDE = r"{\1c&H00D7FF&\3c&H00D7FF&\bord14\shad0}"
+HIGHLIGHT_OVERRIDE = r"{\1c&H000000&\3c&H00D7FF&\bord14\shad0}"
 RESET_OVERRIDE = r"{\r}"
 
 
