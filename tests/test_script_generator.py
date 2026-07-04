@@ -1,5 +1,15 @@
 from unittest.mock import patch
-from shortform.script_generator import generate_script
+from shortform.script_generator import ARTICLE_PROMPT_TEMPLATE, TOPIC_PROMPT_TEMPLATE, generate_script
+
+
+def test_topic_prompt_asks_for_a_title():
+    prompt = TOPIC_PROMPT_TEMPLATE.format(topic="주제")
+    assert "제목" in prompt
+
+
+def test_article_prompt_asks_for_a_title():
+    prompt = ARTICLE_PROMPT_TEMPLATE.format(title="기사 제목", text="본문")
+    assert "제목" in prompt.split("기사 제목:")[0]
 
 
 @patch("shortform.script_generator.generate_script_json")
