@@ -19,6 +19,7 @@ SCRIPT_TOOL = {
                         "narration": {"type": "string"},
                         "visual_description": {"type": "string"},
                         "duration_hint_sec": {"type": "number"},
+                        "highlight_words": {"type": "array", "items": {"type": "string"}},
                     },
                     "required": ["index", "narration", "visual_description", "duration_hint_sec"],
                 },

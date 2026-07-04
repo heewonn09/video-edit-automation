@@ -37,3 +37,10 @@ def test_generate_script_json_retries_on_transient_error(mock_anthropic_cls, mon
 
     assert result == {"title": "t", "scenes": []}
     assert mock_client.messages.create.call_count == 2
+
+
+def test_script_tool_schema_includes_highlight_words():
+    from shortform.llm_client import SCRIPT_TOOL
+    scene_props = SCRIPT_TOOL["input_schema"]["properties"]["scenes"]["items"]["properties"]
+    assert "highlight_words" in scene_props
+    assert scene_props["highlight_words"]["type"] == "array"
