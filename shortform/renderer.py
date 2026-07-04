@@ -61,3 +61,19 @@ def assemble_final_video(scene_clip_paths, srt_text, out_path, cfg):
     srt_path.write_text(srt_text, encoding="utf-8")
 
     return burn_subtitles(merged_path, srt_path, out_path, cfg)
+
+
+def burn_ass_subtitles(video_path, ass_path, out_path):
+    video_path = str(video_path)
+    ass_escaped = str(ass_path).replace("\\", "/").replace(":", "\\:")
+    out_path = Path(out_path)
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", video_path,
+        "-vf", f"ass='{ass_escaped}'",
+        "-c:a", "copy",
+        str(out_path),
+    ]
+    subprocess.run(cmd, capture_output=True, check=True)
+    return out_path

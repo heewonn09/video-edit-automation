@@ -55,3 +55,15 @@ def test_assemble_final_video_concats_then_burns(mock_concat, mock_burn, tmp_pat
     mock_concat.assert_called_once()
     mock_burn.assert_called_once()
     assert result == out_path
+
+
+@patch("shortform.renderer.subprocess.run")
+def test_burn_ass_subtitles_calls_ffmpeg_with_ass_filter(mock_run, tmp_path):
+    from shortform.renderer import burn_ass_subtitles
+
+    out_path = tmp_path / "final.mp4"
+    result = burn_ass_subtitles(tmp_path / "merged.mp4", tmp_path / "captions.ass", out_path)
+
+    cmd = mock_run.call_args[0][0]
+    assert any("ass=" in str(arg) for arg in cmd)
+    assert result == out_path
