@@ -181,3 +181,48 @@ def test_assemble_with_transitions_single_clip_skips_xfade(mock_run, mock_burn, 
     cmd = mock_run.call_args[0][0]
     assert "-filter_complex" not in cmd
     mock_burn.assert_called_once()
+
+
+@patch("shortform.renderer.burn_ass_subtitles")
+@patch("shortform.renderer.subprocess.run")
+def test_assemble_with_transitions_cycles_transition_types(mock_run, mock_burn, tmp_path):
+    from shortform.renderer import assemble_with_transitions
+
+    out_path = tmp_path / "final.mp4"
+    mock_burn.return_value = out_path
+
+    assemble_with_transitions(
+        [tmp_path / f"c{i}.mp4" for i in range(1, 6)],
+        [4.0, 4.0, 4.0, 4.0, 4.0],
+        "ASS_TEXT",
+        out_path,
+        transition_duration=0.5,
+    )
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "xfade=transition=fade:" in filter_complex
+    assert "xfade=transition=slideleft:" in filter_complex
+    assert "xfade=transition=wipeup:" in filter_complex
+    assert "xfade=transition=circleopen:" in filter_complex
+
+
+@patch("shortform.renderer.burn_ass_subtitles")
+@patch("shortform.renderer.subprocess.run")
+def test_assemble_with_transitions_wraps_transition_cycle(mock_run, mock_burn, tmp_path):
+    from shortform.renderer import assemble_with_transitions
+
+    out_path = tmp_path / "final.mp4"
+    mock_burn.return_value = out_path
+
+    assemble_with_transitions(
+        [tmp_path / f"c{i}.mp4" for i in range(1, 7)],
+        [4.0] * 6,
+        "ASS_TEXT",
+        out_path,
+        transition_duration=0.5,
+    )
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert filter_complex.count("xfade=transition=fade:") == 2

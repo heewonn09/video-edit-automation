@@ -126,11 +126,13 @@ def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, t
         filter_parts = []
         cursor = durations[0]
         v_label, a_label = "0:v", "0:a"
+        transition_types = ["fade", "slideleft", "wipeup", "circleopen"]
         for i in range(1, n):
             offset = cursor - transition_duration
             v_out, a_out = f"v{i}", f"a{i}"
+            transition = transition_types[(i - 1) % len(transition_types)]
             filter_parts.append(
-                f"[{v_label}][{i}:v]xfade=transition=fade:duration={transition_duration}:offset={offset}[{v_out}]"
+                f"[{v_label}][{i}:v]xfade=transition={transition}:duration={transition_duration}:offset={offset}[{v_out}]"
             )
             filter_parts.append(f"[{a_label}][{i}:a]acrossfade=d={transition_duration}[{a_out}]")
             v_label, a_label = v_out, a_out
