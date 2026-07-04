@@ -5,3 +5,5 @@ trafilatura
 python-dotenv
 edge-tts
 google-genai
+playwright
+tenacity
