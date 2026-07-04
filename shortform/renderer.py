@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 
 from process import _fmt_srt_time, _segments_to_srt, burn_subtitles, concat_clips
+from shortform.sound_effects import generate_whoosh_sound
 
 SCALE_FILTER = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
 
@@ -124,11 +125,13 @@ def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, t
             inputs += ["-i", str(p)]
 
         filter_parts = []
+        offsets = []
         cursor = durations[0]
         v_label, a_label = "0:v", "0:a"
         transition_types = ["fade", "slideleft", "wipeup", "circleopen"]
         for i in range(1, n):
             offset = cursor - transition_duration
+            offsets.append(offset)
             v_out, a_out = f"v{i}", f"a{i}"
             transition = transition_types[(i - 1) % len(transition_types)]
             filter_parts.append(
@@ -137,6 +140,25 @@ def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, t
             filter_parts.append(f"[{a_label}][{i}:a]acrossfade=d={transition_duration}[{a_out}]")
             v_label, a_label = v_out, a_out
             cursor += durations[i] - transition_duration
+
+        whoosh_path = out_path.parent / "whoosh.wav"
+        generate_whoosh_sound(whoosh_path, duration=transition_duration)
+
+        whoosh_labels = []
+        for idx, offset in enumerate(offsets):
+            delay_ms = int(offset * 1000)
+            src_index = n + idx
+            inputs += ["-i", str(whoosh_path)]
+            label = f"wh{idx}"
+            filter_parts.append(f"[{src_index}:a]adelay={delay_ms}|{delay_ms},volume=0.4[{label}]")
+            whoosh_labels.append(f"[{label}]")
+
+        mix_inputs = f"[{a_label}]" + "".join(whoosh_labels)
+        filter_parts.append(
+            f"{mix_inputs}amix=inputs={len(whoosh_labels) + 1}:duration=first:dropout_transition=0[aout]"
+        )
+        a_label = "aout"
+
         filter_complex = ";".join(filter_parts)
 
         cmd = [

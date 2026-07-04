@@ -138,13 +138,15 @@ def test_burn_ass_subtitles_calls_ffmpeg_with_ass_filter(mock_run, tmp_path):
     assert result == out_path
 
 
+@patch("shortform.renderer.generate_whoosh_sound")
 @patch("shortform.renderer.burn_ass_subtitles")
 @patch("shortform.renderer.subprocess.run")
-def test_assemble_with_transitions_chains_xfade_for_multiple_clips(mock_run, mock_burn, tmp_path):
+def test_assemble_with_transitions_chains_xfade_for_multiple_clips(mock_run, mock_burn, mock_whoosh, tmp_path):
     from shortform.renderer import assemble_with_transitions
 
     out_path = tmp_path / "final.mp4"
     mock_burn.return_value = out_path
+    mock_whoosh.return_value = tmp_path / "whoosh.wav"
 
     result = assemble_with_transitions(
         [tmp_path / "c1.mp4", tmp_path / "c2.mp4", tmp_path / "c3.mp4"],
@@ -226,3 +228,46 @@ def test_assemble_with_transitions_wraps_transition_cycle(mock_run, mock_burn, t
     cmd = mock_run.call_args[0][0]
     filter_complex = cmd[cmd.index("-filter_complex") + 1]
     assert filter_complex.count("xfade=transition=fade:") == 2
+
+
+@patch("shortform.renderer.generate_whoosh_sound")
+@patch("shortform.renderer.burn_ass_subtitles")
+@patch("shortform.renderer.subprocess.run")
+def test_assemble_with_transitions_mixes_whoosh_at_each_boundary(mock_run, mock_burn, mock_whoosh, tmp_path):
+    from shortform.renderer import assemble_with_transitions
+
+    out_path = tmp_path / "final.mp4"
+    mock_burn.return_value = out_path
+    mock_whoosh.return_value = tmp_path / "whoosh.wav"
+
+    assemble_with_transitions(
+        [tmp_path / "c1.mp4", tmp_path / "c2.mp4", tmp_path / "c3.mp4"],
+        [5.0, 4.0, 6.0],
+        "ASS_TEXT",
+        out_path,
+        transition_duration=0.5,
+    )
+
+    mock_whoosh.assert_called_once_with(tmp_path / "whoosh.wav", duration=0.5)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert filter_complex.count("adelay=") == 2
+    assert "adelay=4500|4500" in filter_complex
+    assert "adelay=8000|8000" in filter_complex
+    assert "volume=0.4" in filter_complex
+    assert "amix=inputs=3:" in filter_complex
+
+
+@patch("shortform.renderer.generate_whoosh_sound")
+@patch("shortform.renderer.burn_ass_subtitles")
+@patch("shortform.renderer.subprocess.run")
+def test_assemble_with_transitions_single_clip_skips_whoosh(mock_run, mock_burn, mock_whoosh, tmp_path):
+    from shortform.renderer import assemble_with_transitions
+
+    out_path = tmp_path / "final.mp4"
+    mock_burn.return_value = out_path
+
+    assemble_with_transitions([tmp_path / "c1.mp4"], [5.0], "ASS_TEXT", out_path)
+
+    mock_whoosh.assert_not_called()
