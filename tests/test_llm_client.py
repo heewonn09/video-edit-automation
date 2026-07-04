@@ -39,6 +39,24 @@ def test_generate_script_json_retries_on_transient_error(mock_anthropic_cls, mon
     assert mock_client.messages.create.call_count == 2
 
 
+@patch("shortform.llm_client.anthropic.Anthropic")
+def test_generate_script_json_retries_when_required_field_missing(mock_anthropic_cls, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    incomplete_block = MagicMock(type="tool_use", input={"scenes": []})
+    complete_block = MagicMock(type="tool_use", input={"title": "t", "scenes": []})
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = [
+        MagicMock(content=[incomplete_block]),
+        MagicMock(content=[complete_block]),
+    ]
+    mock_anthropic_cls.return_value = mock_client
+
+    result = generate_script_json("프롬프트")
+
+    assert result == {"title": "t", "scenes": []}
+    assert mock_client.messages.create.call_count == 2
+
+
 def test_script_tool_schema_includes_highlight_words():
     from shortform.llm_client import SCRIPT_TOOL
     scene_props = SCRIPT_TOOL["input_schema"]["properties"]["scenes"]["items"]["properties"]
