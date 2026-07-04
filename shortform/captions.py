@@ -33,13 +33,17 @@ def _highlight_line(narration: str, highlight_words) -> str:
     return text
 
 
-def build_ass_from_scenes(scenes, durations) -> str:
+def build_ass_from_scenes(scenes, durations, transition_duration=0.5) -> str:
     lines = [ASS_HEADER]
+    n = len(durations)
     cursor = 0.0
-    for scene, duration in zip(scenes, durations):
+    for i, (scene, duration) in enumerate(zip(scenes, durations)):
+        scene_end = cursor + duration
+        if i < n - 1:
+            scene_end -= transition_duration
         start = _fmt_ass_time(cursor)
-        end = _fmt_ass_time(cursor + duration)
+        end = _fmt_ass_time(scene_end)
         text = _highlight_line(scene.narration, scene.highlight_words)
         lines.append(f"Dialogue: 0,{start},{end},Default,,0,0,0,,{text}")
-        cursor += duration
+        cursor = scene_end
     return "\n".join(lines)

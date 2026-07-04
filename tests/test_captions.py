@@ -3,16 +3,22 @@ from shortform.scene_schema import Scene
 
 
 def test_build_ass_includes_header_and_cumulative_timing():
-    scenes = [Scene(1, "첫 문장", "v1", 4.0), Scene(2, "둘째 문장", "v2", 3.0)]
-    ass = build_ass_from_scenes(scenes, [4.0, 3.0])
+    scenes = [
+        Scene(1, "첫 문장", "v1", 5.0),
+        Scene(2, "둘째 문장", "v2", 4.0),
+        Scene(3, "셋째 문장", "v3", 6.0),
+    ]
+    ass = build_ass_from_scenes(scenes, [5.0, 4.0, 6.0], transition_duration=0.5)
 
     assert "[Script Info]" in ass
     assert "[V4+ Styles]" in ass
     assert "[Events]" in ass
-    assert "0:00:00.00,0:00:04.00" in ass
+    assert "0:00:00.00,0:00:04.50" in ass
     assert "첫 문장" in ass
-    assert "0:00:04.00,0:00:07.00" in ass
+    assert "0:00:04.50,0:00:08.00" in ass
     assert "둘째 문장" in ass
+    assert "0:00:08.00,0:00:14.00" in ass
+    assert "셋째 문장" in ass
 
 
 def test_build_ass_highlights_matching_word():

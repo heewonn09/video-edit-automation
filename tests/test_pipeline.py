@@ -1,6 +1,6 @@
 from unittest.mock import patch, call
 from pathlib import Path
-from shortform.pipeline import render_script
+from shortform.pipeline import render_script, TRANSITION_DURATION_SEC
 from shortform.scene_schema import Script, Scene
 from shortform.media_matcher import SceneMedia
 
@@ -52,7 +52,7 @@ def test_render_script_wires_all_stages(
     )
 
     # Verify ASS captions were built from scenes and their durations
-    mock_ass.assert_called_once_with(script.scenes, [4.0])
+    mock_ass.assert_called_once_with(script.scenes, [4.0], TRANSITION_DURATION_SEC)
 
     # Verify final assembly was called
     mock_assemble.assert_called_once()
@@ -98,6 +98,7 @@ def test_render_script_skips_scene_with_failed_tts(
 
     mock_clip.assert_called_once()
     assert mock_ass.call_args[0][0] == [script.scenes[0]]
+    assert mock_ass.call_args[0][2] == TRANSITION_DURATION_SEC
     assert "씬 2" in caplog.text
     assert result == out_path
 

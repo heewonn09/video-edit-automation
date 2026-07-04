@@ -14,6 +14,10 @@ DEFAULT_RENDER_CONFIG = {
     "subtitle_font_size": 44,
 }
 
+# Shared between build_ass_from_scenes and assemble_with_transitions so caption
+# timing always matches the crossfade-compressed video timeline.
+TRANSITION_DURATION_SEC = 0.5
+
 
 def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
     work_dir = Path(work_dir)
@@ -61,5 +65,7 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
     if not clip_paths:
         raise RuntimeError("모든 씬 처리에 실패하여 영상을 생성할 수 없습니다.")
 
-    ass_text = build_ass_from_scenes(successful_scenes, durations)
-    return assemble_with_transitions(clip_paths, durations, ass_text, out_path)
+    ass_text = build_ass_from_scenes(successful_scenes, durations, TRANSITION_DURATION_SEC)
+    return assemble_with_transitions(
+        clip_paths, durations, ass_text, out_path, transition_duration=TRANSITION_DURATION_SEC
+    )
