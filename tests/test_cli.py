@@ -43,3 +43,17 @@ def test_cli_requires_topic_or_url(capsys):
         assert False, "expected SystemExit"
     except SystemExit:
         pass
+
+
+@patch("shortform.cli._process_one")
+def test_cli_batch_processes_each_line_and_continues_on_failure(mock_process, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    batch_file = tmp_path / "topics.txt"
+    batch_file.write_text("주제1\n주제2\n", encoding="utf-8")
+    mock_process.side_effect = [RuntimeError("실패"), None]
+
+    main(["--batch", str(batch_file)])
+
+    assert mock_process.call_count == 2
+    assert mock_process.call_args_list[0][0][0] == "주제1"
+    assert mock_process.call_args_list[1][0][0] == "주제2"
