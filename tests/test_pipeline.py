@@ -28,8 +28,15 @@ def test_render_script_wires_all_stages(
     # Verify TTS synthesis was called with correct scene narration and audio path
     mock_tts.assert_called_once_with("나레이션", work_dir / "scene_01.mp3")
 
-    # Verify media resolution was called with script, asset_folder, and generated path
-    mock_resolve.assert_called_once_with(script, None, work_dir / "generated")
+    # Verify media resolution was called with filtered script (only successful scenes)
+    # For single successful scene, filtered script should contain that scene
+    call_args = mock_resolve.call_args
+    assert call_args[0][1] is None  # asset_folder
+    assert call_args[0][2] == work_dir / "generated"  # generated path
+    filtered_script = call_args[0][0]
+    assert filtered_script.title == script.title
+    assert len(filtered_script.scenes) == 1
+    assert filtered_script.scenes[0].index == 1
 
     # Verify duration was measured for the synthesized audio
     mock_duration.assert_called_once_with(work_dir / "scene_01.mp3")
@@ -83,6 +90,12 @@ def test_render_script_skips_scene_with_failed_tts(
     with caplog.at_level("WARNING"):
         result = render_script(script, out_path, work_dir=tmp_path / "media")
 
+    # Verify resolve_scene_media was called with only the successful scene (scene 1)
+    call_args = mock_resolve.call_args
+    filtered_script = call_args[0][0]
+    assert len(filtered_script.scenes) == 1
+    assert filtered_script.scenes[0].index == 1
+
     mock_clip.assert_called_once()
     assert mock_srt.call_args[0][0] == [script.scenes[0]]
     assert "씬 2" in caplog.text
@@ -95,10 +108,12 @@ def test_render_script_skips_scene_with_failed_tts(
 def test_render_script_raises_when_all_scenes_fail(mock_tts, mock_duration, mock_resolve, tmp_path):
     script = Script(title="T", scenes=[Scene(1, "n", "v", 4.0)])
     mock_tts.side_effect = RuntimeError("TTS 실패")
-    mock_resolve.return_value = {}
 
     try:
         render_script(script, tmp_path / "final.mp4", work_dir=tmp_path / "media")
         assert False, "expected RuntimeError"
     except RuntimeError as e:
         assert "모든 씬" in str(e)
+
+    # Verify resolve_scene_media was NOT called when all TTS failed
+    mock_resolve.assert_not_called()

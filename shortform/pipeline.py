@@ -3,6 +3,7 @@ from pathlib import Path
 
 from shortform.media_matcher import resolve_scene_media
 from shortform.renderer import assemble_final_video, build_scene_clip, build_srt_from_scenes
+from shortform.scene_schema import Script
 from shortform.tts import get_audio_duration, synthesize_narration
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,13 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
         except Exception as e:
             logger.warning(f"씬 {scene.index} 나레이션 생성 실패 ({e}) — 스킵")
 
-    scene_media = resolve_scene_media(script, asset_folder, work_dir / "generated")
+    # Only resolve media for scenes with successful TTS
+    if audio_paths:
+        filtered_scenes = [scene for scene in script.scenes if scene.index in audio_paths]
+        filtered_script = Script(title=script.title, scenes=filtered_scenes)
+        scene_media = resolve_scene_media(filtered_script, asset_folder, work_dir / "generated")
+    else:
+        scene_media = {}
 
     successful_scenes = []
     clip_paths = []
