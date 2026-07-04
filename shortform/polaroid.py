@@ -1,4 +1,6 @@
 import math
+import subprocess
+from pathlib import Path
 
 CANVAS_WIDTH = 1080
 CANVAS_HEIGHT = 1920
@@ -30,3 +32,27 @@ def build_polaroid_filter_complex(frame_count: int, tilt_deg: float) -> str:
         f"[bg][rotated_shadow]overlay=(W-w)/2+12:(H-h)/2+16:format=auto[bg_shadow];"
         f"[bg_shadow][rotated_photo]overlay=(W-w)/2:(H-h)/2:format=auto[v]"
     )
+
+
+def build_polaroid_scene_clip(image_path, audio_path, duration, out_path, tilt_variant=0):
+    image_path = str(image_path)
+    audio_path = str(audio_path)
+    out_path = Path(out_path)
+
+    frame_count = max(1, int(duration * 30))
+    tilt_deg = -6 if tilt_variant % 2 == 0 else 6
+    filter_complex = build_polaroid_filter_complex(frame_count, tilt_deg)
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-loop", "1", "-i", image_path,
+        "-i", audio_path,
+        "-filter_complex", filter_complex,
+        "-map", "[v]", "-map", "1:a",
+        "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k",
+        "-t", str(duration),
+        str(out_path),
+    ]
+    subprocess.run(cmd, capture_output=True, check=True)
+    return out_path
