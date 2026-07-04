@@ -1,4 +1,7 @@
+import logging
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -20,5 +23,20 @@ class Script:
 
 
 def script_from_dict(data: dict) -> Script:
-    scenes = [Scene(**s) for s in data["scenes"]]
+    scenes = []
+    for i, s in enumerate(data["scenes"]):
+        try:
+            scenes.append(Scene(
+                index=s["index"],
+                narration=s["narration"],
+                visual_description=s["visual_description"],
+                duration_hint_sec=s["duration_hint_sec"],
+                highlight_words=s.get("highlight_words", []),
+            ))
+        except KeyError as e:
+            logger.warning(f"씬 {i} 파싱 실패 (누락된 필드: {e}) — 스킵")
+
+    if data["scenes"] and not scenes:
+        raise RuntimeError("모든 씬 파싱에 실패하여 스크립트를 생성할 수 없습니다.")
+
     return Script(title=data["title"], scenes=scenes)

@@ -1,3 +1,5 @@
+import pytest
+
 from shortform.scene_schema import Scene, Script, script_from_dict
 
 def test_script_from_dict_builds_scenes():
@@ -36,3 +38,29 @@ def test_script_from_dict_passes_through_highlight_words():
     }
     script = script_from_dict(data)
     assert script.scenes[0].highlight_words == ["70만원"]
+
+
+def test_script_from_dict_skips_malformed_scene_and_keeps_the_rest():
+    data = {
+        "title": "T",
+        "scenes": [
+            {"index": 1, "narration": "정상 씬", "visual_description": "v", "duration_hint_sec": 4},
+            {"index": 2, "narority": "오타난 필드", "visual_description": "v", "duration_hint_sec": 5},
+            {"index": 3, "narration": "정상 씬2", "visual_description": "v", "duration_hint_sec": 6},
+        ],
+    }
+    script = script_from_dict(data)
+    assert len(script.scenes) == 2
+    assert script.scenes[0].narration == "정상 씬"
+    assert script.scenes[1].narration == "정상 씬2"
+
+
+def test_script_from_dict_raises_when_every_scene_is_malformed():
+    data = {
+        "title": "T",
+        "scenes": [
+            {"index": 1, "narority": "오타", "visual_description": "v", "duration_hint_sec": 4},
+        ],
+    }
+    with pytest.raises(RuntimeError):
+        script_from_dict(data)
