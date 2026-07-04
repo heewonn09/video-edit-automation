@@ -27,3 +27,20 @@ def test_match_assets_maps_scene_to_asset(mock_anthropic_cls, monkeypatch):
 def test_match_assets_returns_none_for_all_when_no_assets():
     script = Script(title="T", scenes=[Scene(1, "n", "골목길 야간", 5.0)])
     assert match_assets(script, []) == {1: None}
+
+
+@patch("shortform.asset_matcher.anthropic.Anthropic")
+def test_match_assets_retries_on_transient_error(mock_anthropic_cls, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    fake_block = MagicMock(type="tool_use", input={"matches": [{"scene_index": 1, "filename": None}]})
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = [RuntimeError("일시적 오류"), MagicMock(content=[fake_block])]
+    mock_anthropic_cls.return_value = mock_client
+
+    script = Script(title="T", scenes=[Scene(1, "n", "v", 5.0)])
+    assets = [AssetInfo(path=Path("a.mp4"), filename="a.mp4", kind="video")]
+
+    result = match_assets(script, assets)
+
+    assert result == {1: None}
+    assert mock_client.messages.create.call_count == 2

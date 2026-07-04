@@ -23,3 +23,17 @@ def test_generate_script_json_raises_runtime_error_when_api_key_missing(monkeypa
     with pytest.raises(RuntimeError) as exc_info:
         generate_script_json("test")
     assert "ANTHROPIC_API_KEY가 설정되지 않았습니다" in str(exc_info.value)
+
+
+@patch("shortform.llm_client.anthropic.Anthropic")
+def test_generate_script_json_retries_on_transient_error(mock_anthropic_cls, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    fake_block = MagicMock(type="tool_use", input={"title": "t", "scenes": []})
+    mock_client = MagicMock()
+    mock_client.messages.create.side_effect = [RuntimeError("일시적 오류"), MagicMock(content=[fake_block])]
+    mock_anthropic_cls.return_value = mock_client
+
+    result = generate_script_json("프롬프트")
+
+    assert result == {"title": "t", "scenes": []}
+    assert mock_client.messages.create.call_count == 2

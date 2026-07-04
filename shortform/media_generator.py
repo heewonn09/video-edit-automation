@@ -3,6 +3,19 @@ from pathlib import Path
 
 from google import genai
 from google.genai import types
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=4))
+def _call_gemini(client, model, prompt):
+    return client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_modalities=["IMAGE"],
+            image_config=types.ImageConfig(aspect_ratio="9:16"),
+        ),
+    )
 
 
 def generate_scene_image(prompt: str, out_path, model: str = "gemini-2.5-flash-image"):
@@ -11,14 +24,7 @@ def generate_scene_image(prompt: str, out_path, model: str = "gemini-2.5-flash-i
         raise RuntimeError("GEMINI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_modalities=["IMAGE"],
-            image_config=types.ImageConfig(aspect_ratio="9:16"),
-        ),
-    )
+    response = _call_gemini(client, model, prompt)
     image_part = next(p for p in response.parts if p.inline_data is not None)
     image = image_part.as_image()
 

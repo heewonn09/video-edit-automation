@@ -27,3 +27,20 @@ def test_generate_scene_image_raises_without_api_key(tmp_path, monkeypatch):
         assert False, "expected RuntimeError"
     except RuntimeError as e:
         assert "GEMINI_API_KEY" in str(e)
+
+
+@patch("shortform.media_generator.genai.Client")
+def test_generate_scene_image_retries_on_transient_error(mock_client_cls, tmp_path, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    mock_image = MagicMock()
+    mock_part = MagicMock(inline_data=object())
+    mock_part.as_image.return_value = mock_image
+    mock_response = MagicMock(parts=[mock_part])
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = [RuntimeError("일시적 오류"), mock_response]
+    mock_client_cls.return_value = mock_client
+
+    out_path = tmp_path / "scene1.png"
+    generate_scene_image("prompt", out_path)
+
+    assert mock_client.models.generate_content.call_count == 2

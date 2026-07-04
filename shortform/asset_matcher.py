@@ -1,6 +1,7 @@
 import os
 
 import anthropic
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 ASSET_MATCH_TOOL = {
     "name": "emit_matches",
@@ -25,6 +26,17 @@ ASSET_MATCH_TOOL = {
 }
 
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=4))
+def _call_anthropic(client, model, prompt):
+    return client.messages.create(
+        model=model,
+        max_tokens=1024,
+        tools=[ASSET_MATCH_TOOL],
+        tool_choice={"type": "tool", "name": "emit_matches"},
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+
 def match_assets(script, assets, model: str = "claude-sonnet-5") -> dict:
     if not assets:
         return {scene.index: None for scene in script.scenes}
@@ -43,13 +55,7 @@ def match_assets(script, assets, model: str = "claude-sonnet-5") -> dict:
         raise RuntimeError("ANTHROPIC_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
     client = anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model=model,
-        max_tokens=1024,
-        tools=[ASSET_MATCH_TOOL],
-        tool_choice={"type": "tool", "name": "emit_matches"},
-        messages=[{"role": "user", "content": prompt}],
-    )
+    response = _call_anthropic(client, model, prompt)
     tool_use_block = next(b for b in response.content if b.type == "tool_use")
 
     assets_by_filename = {a.filename: a for a in assets}
