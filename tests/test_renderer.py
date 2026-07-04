@@ -67,6 +67,8 @@ def test_burn_ass_subtitles_calls_ffmpeg_with_ass_filter(mock_run, tmp_path):
 
     cmd = mock_run.call_args[0][0]
     assert any("ass=" in str(arg) for arg in cmd)
+    assert "-pix_fmt" in cmd
+    assert cmd[cmd.index("-pix_fmt") + 1] == "yuv420p"
     assert result == out_path
 
 
@@ -93,6 +95,8 @@ def test_assemble_with_transitions_chains_xfade_for_multiple_clips(mock_run, moc
     assert filter_complex.count("acrossfade") == 2
     assert "offset=4.5" in filter_complex
     assert "offset=8" in filter_complex
+    assert "-pix_fmt" in cmd
+    assert cmd[cmd.index("-pix_fmt") + 1] == "yuv420p"
 
     mock_burn.assert_called_once()
     assert result == out_path

@@ -80,6 +80,7 @@ def burn_ass_subtitles(video_path, ass_path, out_path):
         "ffmpeg", "-y",
         "-i", video_path,
         "-vf", f"ass='{ass_escaped}'",
+        "-pix_fmt", "yuv420p",
         "-c:a", "copy",
         str(out_path),
     ]
@@ -125,7 +126,7 @@ def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, t
             *inputs,
             "-filter_complex", filter_complex,
             "-map", f"[{v_label}]", "-map", f"[{a_label}]",
-            "-c:v", "libx264", "-c:a", "aac",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac",
             str(merged_path),
         ]
         subprocess.run(cmd, capture_output=True, check=True)
