@@ -3,6 +3,7 @@ from pathlib import Path
 
 from shortform.captions import build_ass_from_scenes
 from shortform.media_matcher import resolve_scene_media
+from shortform.polaroid import build_polaroid_scene_clip
 from shortform.renderer import assemble_with_transitions, build_scene_clip
 from shortform.scene_schema import Script
 from shortform.tts import get_audio_duration, synthesize_narration
@@ -52,10 +53,16 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
         duration = durations_by_index[scene.index]
         clip_path = work_dir / f"clip_{scene.index:02d}.mp4"
         try:
-            build_scene_clip(
-                media.path, media.media_type, audio_paths[scene.index], duration, clip_path,
-                pan_variant=scene.index,
-            )
+            if media.media_type == "image":
+                build_polaroid_scene_clip(
+                    media.path, audio_paths[scene.index], duration, clip_path,
+                    tilt_variant=scene.index,
+                )
+            else:
+                build_scene_clip(
+                    media.path, media.media_type, audio_paths[scene.index], duration, clip_path,
+                    pan_variant=scene.index,
+                )
         except Exception as e:
             logger.warning(f"씬 {scene.index} 클립 생성 실패 ({e}) — 스킵")
             continue
