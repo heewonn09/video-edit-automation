@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
 
+from shortform.captions import build_ass_from_scenes
 from shortform.media_matcher import resolve_scene_media
-from shortform.renderer import assemble_final_video, build_scene_clip, build_srt_from_scenes
+from shortform.renderer import assemble_with_transitions, build_scene_clip
 from shortform.scene_schema import Script
 from shortform.tts import get_audio_duration, synthesize_narration
 
@@ -60,5 +61,5 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
     if not clip_paths:
         raise RuntimeError("모든 씬 처리에 실패하여 영상을 생성할 수 없습니다.")
 
-    srt_text = build_srt_from_scenes(successful_scenes, durations)
-    return assemble_final_video(clip_paths, srt_text, out_path, DEFAULT_RENDER_CONFIG)
+    ass_text = build_ass_from_scenes(successful_scenes, durations)
+    return assemble_with_transitions(clip_paths, durations, ass_text, out_path)
