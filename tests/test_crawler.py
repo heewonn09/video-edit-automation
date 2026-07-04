@@ -57,3 +57,24 @@ def test_fetch_article_uses_rotating_user_agent(mock_get, mock_extract, mock_met
     mock_meta.return_value = MagicMock(title="제목")
 
     fetch_article("https://example.com/a")
+
+
+@patch("shortform.crawler._parse_article_html")
+@patch("shortform.crawler._fetch_with_playwright")
+@patch("shortform.crawler._fetch_via_requests")
+@patch("shortform.crawler._check_robots_allowed")
+def test_fetch_article_falls_back_to_playwright_on_block(
+    mock_robots, mock_via_requests, mock_playwright_fetch, mock_parse
+):
+    from shortform.crawler import CrawlBlocked, ArticleContent
+
+    mock_robots.return_value = True
+    mock_via_requests.side_effect = CrawlBlocked("크롤링 차단됨: HTTP 403 (blocked)")
+    mock_playwright_fetch.return_value = "<html>렌더링된 페이지</html>"
+    mock_parse.return_value = ArticleContent(title="폴백 제목", text="폴백 본문")
+
+    result = fetch_article("https://example.com/blocked-by-bots")
+
+    mock_playwright_fetch.assert_called_once_with("https://example.com/blocked-by-bots")
+    mock_parse.assert_called_once_with("<html>렌더링된 페이지</html>", "https://example.com/blocked-by-bots")
+    assert result.title == "폴백 제목"
