@@ -48,7 +48,8 @@ def test_render_script_wires_all_stages(
         "image",                     # media.media_type
         work_dir / "scene_01.mp3",  # audio_paths[scene.index]
         4.0,                         # duration from mock_duration
-        work_dir / "clip_01.mp4"    # clip_path
+        work_dir / "clip_01.mp4",   # clip_path
+        pan_variant=1,
     )
 
     # Verify ASS captions were built from scenes and their durations

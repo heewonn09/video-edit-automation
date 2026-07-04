@@ -25,6 +25,72 @@ def test_build_scene_clip_handles_video(mock_run, tmp_path):
     assert "-stream_loop" in cmd
 
 
+@patch("shortform.renderer.subprocess.run")
+def test_build_scene_clip_pan_variant_0_is_center_zoom(mock_run, tmp_path):
+    out_path = tmp_path / "clip.mp4"
+    build_scene_clip(tmp_path / "scene.png", "image", tmp_path / "audio.mp3", 4.0, out_path, pan_variant=0)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "z='min(zoom+0.0015,1.5)'" in filter_complex
+    assert "x='iw/2-(iw/zoom/2)'" in filter_complex
+    assert "y='ih/2-(ih/zoom/2)'" in filter_complex
+
+
+@patch("shortform.renderer.subprocess.run")
+def test_build_scene_clip_pan_variant_1_is_left_to_right(mock_run, tmp_path):
+    out_path = tmp_path / "clip.mp4"
+    build_scene_clip(tmp_path / "scene.png", "image", tmp_path / "audio.mp3", 4.0, out_path, pan_variant=1)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "z='1.15'" in filter_complex
+    assert "x='(iw-iw/zoom)*on/119'" in filter_complex
+    assert "y='ih/2-(ih/zoom/2)'" in filter_complex
+
+
+@patch("shortform.renderer.subprocess.run")
+def test_build_scene_clip_pan_variant_2_is_right_to_left(mock_run, tmp_path):
+    out_path = tmp_path / "clip.mp4"
+    build_scene_clip(tmp_path / "scene.png", "image", tmp_path / "audio.mp3", 4.0, out_path, pan_variant=2)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "z='1.15'" in filter_complex
+    assert "x='(iw-iw/zoom)*(1-on/119)'" in filter_complex
+
+
+@patch("shortform.renderer.subprocess.run")
+def test_build_scene_clip_pan_variant_3_is_zoom_out(mock_run, tmp_path):
+    out_path = tmp_path / "clip.mp4"
+    build_scene_clip(tmp_path / "scene.png", "image", tmp_path / "audio.mp3", 4.0, out_path, pan_variant=3)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "z='max(1.5-0.0015*on,1.15)'" in filter_complex
+    assert "x='iw/2-(iw/zoom/2)'" in filter_complex
+
+
+@patch("shortform.renderer.subprocess.run")
+def test_build_scene_clip_pan_variant_wraps_around(mock_run, tmp_path):
+    out_path = tmp_path / "clip.mp4"
+    build_scene_clip(tmp_path / "scene.png", "image", tmp_path / "audio.mp3", 4.0, out_path, pan_variant=4)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "z='min(zoom+0.0015,1.5)'" in filter_complex
+
+
+@patch("shortform.renderer.subprocess.run")
+def test_build_scene_clip_pan_variant_defaults_to_center_zoom(mock_run, tmp_path):
+    out_path = tmp_path / "clip.mp4"
+    build_scene_clip(tmp_path / "scene.png", "image", tmp_path / "audio.mp3", 4.0, out_path)
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "z='min(zoom+0.0015,1.5)'" in filter_complex
+
+
 def test_build_srt_from_scenes_uses_cumulative_timing():
     from shortform.renderer import build_srt_from_scenes
 

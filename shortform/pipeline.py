@@ -52,7 +52,10 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
         duration = durations_by_index[scene.index]
         clip_path = work_dir / f"clip_{scene.index:02d}.mp4"
         try:
-            build_scene_clip(media.path, media.media_type, audio_paths[scene.index], duration, clip_path)
+            build_scene_clip(
+                media.path, media.media_type, audio_paths[scene.index], duration, clip_path,
+                pan_variant=scene.index,
+            )
         except Exception as e:
             logger.warning(f"씬 {scene.index} 클립 생성 실패 ({e}) — 스킵")
             continue

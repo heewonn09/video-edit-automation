@@ -6,13 +6,29 @@ from process import _fmt_srt_time, _segments_to_srt, burn_subtitles, concat_clip
 SCALE_FILTER = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
 
 
-def build_scene_clip(media_path, media_type, audio_path, duration, out_path):
+def build_scene_clip(media_path, media_type, audio_path, duration, out_path, pan_variant=0):
     media_path = str(media_path)
     audio_path = str(audio_path)
     out_path = Path(out_path)
 
     if media_type == "image":
         frame_count = max(1, int(duration * 30))
+        denom = max(frame_count - 1, 1)
+        variant = pan_variant % 4
+        if variant == 1:
+            z_expr = "1.15"
+            x_expr = f"(iw-iw/zoom)*on/{denom}"
+        elif variant == 2:
+            z_expr = "1.15"
+            x_expr = f"(iw-iw/zoom)*(1-on/{denom})"
+        elif variant == 3:
+            z_expr = "max(1.5-0.0015*on,1.15)"
+            x_expr = "iw/2-(iw/zoom/2)"
+        else:
+            z_expr = "min(zoom+0.0015,1.5)"
+            x_expr = "iw/2-(iw/zoom/2)"
+        y_expr = "ih/2-(ih/zoom/2)"
+
         cmd = [
             "ffmpeg", "-y",
             "-loop", "1", "-i", media_path,
@@ -21,8 +37,8 @@ def build_scene_clip(media_path, media_type, audio_path, duration, out_path):
             (
                 "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,"
                 "crop=1080:1920,scale=8000:-2,"
-                f"zoompan=z='min(zoom+0.0015,1.5)':d={frame_count}:"
-                "x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,"
+                f"zoompan=z='{z_expr}':d={frame_count}:"
+                f"x='{x_expr}':y='{y_expr}':s=1080x1920:fps=30,"
                 "format=yuv420p[v]"
             ),
             "-map", "[v]", "-map", "1:a",
