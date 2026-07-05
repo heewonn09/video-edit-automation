@@ -119,6 +119,41 @@ def test_render_script_routes_split_layout_to_split_builder(
 
 
 @patch("shortform.pipeline.assemble_with_transitions")
+@patch("shortform.pipeline.build_title_card_scene_clip")
+@patch("shortform.pipeline.resolve_editing_plan")
+@patch("shortform.pipeline.build_ass_from_scenes")
+@patch("shortform.pipeline.resolve_scene_media")
+@patch("shortform.pipeline.get_audio_duration")
+@patch("shortform.pipeline.synthesize_narration")
+def test_render_script_routes_titlecard_layout_to_title_card_builder(
+    mock_tts, mock_duration, mock_resolve, mock_ass, mock_plan, mock_card, mock_assemble, tmp_path
+):
+    script = Script(
+        title="T",
+        scenes=[Scene(1, "훅 나레이션", "골목길", 4.0, highlight_words=["훅"])],
+    )
+    work_dir = tmp_path / "media"
+    mock_duration.return_value = 4.0
+    mock_resolve.return_value = {1: SceneMedia(1, tmp_path / "scene_01.png", "image")}
+    mock_ass.return_value = "ASS_TEXT"
+    mock_plan.return_value = [ScenePlan(layout="titlecard", transition="circleopen")]
+    mock_card.return_value = work_dir / "clip_01.mp4"
+    out_path = tmp_path / "final.mp4"
+    mock_assemble.return_value = out_path
+
+    render_script(script, out_path, asset_folder=None, work_dir=work_dir)
+
+    mock_card.assert_called_once_with(
+        tmp_path / "scene_01.png",
+        work_dir / "scene_01.mp3",
+        4.0,
+        work_dir / "clip_01.mp4",
+        hook_text="훅 나레이션",
+        highlight_words=["훅"],
+    )
+
+
+@patch("shortform.pipeline.assemble_with_transitions")
 @patch("shortform.pipeline.build_scene_clip")
 @patch("shortform.pipeline.resolve_editing_plan")
 @patch("shortform.pipeline.build_ass_from_scenes")
@@ -192,7 +227,7 @@ def test_render_script_routes_video_media_to_build_scene_clip(
 
 
 @patch("shortform.pipeline.assemble_with_transitions")
-@patch("shortform.pipeline.build_scene_clip")
+@patch("shortform.pipeline.build_title_card_scene_clip")
 @patch("shortform.pipeline.build_ass_from_scenes")
 @patch("shortform.pipeline.resolve_scene_media")
 @patch("shortform.pipeline.get_audio_duration")
@@ -227,7 +262,7 @@ def test_render_script_skips_scene_with_failed_tts(
     assert len(filtered_script.scenes) == 1
     assert filtered_script.scenes[0].index == 1
 
-    # Scene 1 (first renderable, forced fullscreen hook) routes to build_scene_clip
+    # Scene 1 (first renderable, forced titlecard hook) routes to the title card builder
     mock_clip.assert_called_once()
     assert mock_ass.call_args[0][0] == [script.scenes[0]]
     assert mock_ass.call_args[0][2] == TRANSITION_DURATION_SEC

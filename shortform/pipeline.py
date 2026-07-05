@@ -7,6 +7,7 @@ from shortform.media_matcher import resolve_scene_media
 from shortform.polaroid import build_polaroid_scene_clip
 from shortform.renderer import assemble_with_transitions, build_scene_clip
 from shortform.split_screen import build_split_screen_scene_clip
+from shortform.title_card import build_title_card_scene_clip
 from shortform.scene_schema import Script
 from shortform.tts import get_audio_duration, synthesize_narration
 
@@ -75,6 +76,12 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
                 elif plan.layout == "split":
                     build_split_screen_scene_clip(
                         media.path, audio_paths[scene.index], duration, clip_path,
+                    )
+                elif plan.layout == "titlecard":
+                    build_title_card_scene_clip(
+                        media.path, audio_paths[scene.index], duration, clip_path,
+                        hook_text=scene.narration,
+                        highlight_words=scene.highlight_words,
                     )
                 else:  # fullscreen
                     build_scene_clip(
