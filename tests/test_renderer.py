@@ -233,6 +233,58 @@ def test_assemble_with_transitions_wraps_transition_cycle(mock_run, mock_burn, t
 @patch("shortform.renderer.generate_whoosh_sound")
 @patch("shortform.renderer.burn_ass_subtitles")
 @patch("shortform.renderer.subprocess.run")
+def test_assemble_with_transitions_uses_per_scene_transitions(mock_run, mock_burn, mock_whoosh, tmp_path):
+    from shortform.renderer import assemble_with_transitions
+
+    out_path = tmp_path / "final.mp4"
+    mock_burn.return_value = out_path
+
+    # transitions[i] is the xfade INTO scene i; index 0 is unused (nothing precedes it)
+    assemble_with_transitions(
+        [tmp_path / f"c{i}.mp4" for i in range(1, 4)],
+        [4.0, 4.0, 4.0],
+        "ASS_TEXT",
+        out_path,
+        transition_duration=0.5,
+        transitions=["fade", "wipeup", "circleopen"],
+    )
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    # Scene 1 entered with wipeup, scene 2 with circleopen (index 0 "fade" is unused)
+    assert "xfade=transition=wipeup:" in filter_complex
+    assert "xfade=transition=circleopen:" in filter_complex
+    assert "xfade=transition=slideleft:" not in filter_complex
+
+
+@patch("shortform.renderer.generate_whoosh_sound")
+@patch("shortform.renderer.burn_ass_subtitles")
+@patch("shortform.renderer.subprocess.run")
+def test_assemble_with_transitions_falls_back_to_cycle_when_transitions_short(mock_run, mock_burn, mock_whoosh, tmp_path):
+    from shortform.renderer import assemble_with_transitions
+
+    out_path = tmp_path / "final.mp4"
+    mock_burn.return_value = out_path
+
+    # Too-short list → safe fallback to the default cycling behavior
+    assemble_with_transitions(
+        [tmp_path / f"c{i}.mp4" for i in range(1, 4)],
+        [4.0, 4.0, 4.0],
+        "ASS_TEXT",
+        out_path,
+        transition_duration=0.5,
+        transitions=["fade"],
+    )
+
+    cmd = mock_run.call_args[0][0]
+    filter_complex = cmd[cmd.index("-filter_complex") + 1]
+    assert "xfade=transition=fade:" in filter_complex
+    assert "xfade=transition=slideleft:" in filter_complex
+
+
+@patch("shortform.renderer.generate_whoosh_sound")
+@patch("shortform.renderer.burn_ass_subtitles")
+@patch("shortform.renderer.subprocess.run")
 def test_assemble_with_transitions_mixes_whoosh_at_each_boundary(mock_run, mock_burn, mock_whoosh, tmp_path):
     from shortform.renderer import assemble_with_transitions
 

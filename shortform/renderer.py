@@ -105,7 +105,8 @@ def burn_ass_subtitles(video_path, ass_path, out_path):
     return out_path
 
 
-def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, transition_duration=0.5):
+def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path,
+                              transition_duration=0.5, transitions=None):
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     merged_path = out_path.parent / "merged.mp4"
@@ -128,12 +129,18 @@ def assemble_with_transitions(scene_clip_paths, durations, ass_text, out_path, t
         offsets = []
         cursor = durations[0]
         v_label, a_label = "0:v", "0:a"
-        transition_types = ["fade", "slideleft", "wipeup", "circleopen"]
+        default_types = ["fade", "slideleft", "wipeup", "circleopen"]
+        # Per-scene transitions[i] = xfade INTO scene i (index 0 unused). Fall back to
+        # the default cycle if not supplied or too short to cover every scene.
+        use_per_scene = transitions is not None and len(transitions) >= n
         for i in range(1, n):
             offset = cursor - transition_duration
             offsets.append(offset)
             v_out, a_out = f"v{i}", f"a{i}"
-            transition = transition_types[(i - 1) % len(transition_types)]
+            if use_per_scene:
+                transition = transitions[i]
+            else:
+                transition = default_types[(i - 1) % len(default_types)]
             filter_parts.append(
                 f"[{v_label}][{i}:v]xfade=transition={transition}:duration={transition_duration}:offset={offset}[{v_out}]"
             )
