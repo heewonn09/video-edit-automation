@@ -25,6 +25,12 @@ def test_prompt_includes_editing_direction_guide():
     assert "transition_in" in prompt
 
 
+def test_prompt_asks_for_hook_candidates():
+    prompt = TOPIC_PROMPT_TEMPLATE.format(topic="주제", editing_guide=EDITING_DIRECTION_GUIDE)
+    assert "hook_candidates" in prompt
+    assert "hook_reason" in prompt
+
+
 @patch("shortform.script_generator.generate_script_json")
 def test_generate_script_from_topic(mock_llm):
     mock_llm.return_value = {"title": "T", "scenes": [

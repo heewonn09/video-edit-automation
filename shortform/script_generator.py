@@ -5,9 +5,13 @@ from shortform.scene_schema import Script, script_from_dict
 
 EDITING_DIRECTION_GUIDE = """\
 각 씬마다 내용에 맞는 화면 구성(layout)과 전환(transition_in)을 함께 정해줘.
-- layout: 풍경·전체 임팩트·강한 시작은 fullscreen, 인물·특정 순간 강조는 polaroid, 비교·전후·둘을 나란히 보여줄 땐 split.
+- layout: 풍경·전체 임팩트는 fullscreen, 인물·특정 순간 강조는 polaroid, 비교·전후·둘을 나란히 보여줄 땐 split, 핵심 문구를 디자인된 텍스트로 크게 보여줄 땐 titlecard.
 - transition_in: 회상·감정은 dissolve, 항목을 나열하며 넘어갈 땐 slide, 장소·장면이 바뀌면 wipe, 강조·훅은 zoom.
-영상이 단조롭지 않도록 연속된 씬은 되도록 다른 layout을 쓰되, 억지로 바꾸지 말고 내용에 맞게 정해줘."""
+영상이 단조롭지 않도록 연속된 씬은 되도록 다른 layout을 쓰되, 억지로 바꾸지 말고 내용에 맞게 정해줘.
+
+영상 첫 3초에 시청자를 붙잡을 오프닝 훅 후보를 3개 만들어 hook_candidates로 출력해줘.
+그중 가장 강한 하나를 골라 첫 번째 씬의 나레이션으로 그대로 사용하고, 왜 그것을 골랐는지 hook_reason에 한 줄로 적어줘.
+좋은 훅: 구체적 숫자, 의외성, 질문, 시청자가 자기 얘기라고 느끼는 표현."""
 
 TOPIC_PROMPT_TEMPLATE = """\
 다음 주제로 30~60초 분량의 숏폼 영상 나레이션 스크립트를 작성해줘.

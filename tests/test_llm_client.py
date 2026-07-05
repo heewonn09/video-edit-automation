@@ -82,9 +82,20 @@ def test_script_tool_schema_includes_layout_and_transition_enums():
     from shortform.llm_client import SCRIPT_TOOL
     scene = SCRIPT_TOOL["input_schema"]["properties"]["scenes"]["items"]
     scene_props = scene["properties"]
-    assert scene_props["layout"]["enum"] == ["fullscreen", "polaroid", "split"]
+    assert scene_props["layout"]["enum"] == ["fullscreen", "polaroid", "split", "titlecard"]
     assert scene_props["transition_in"]["enum"] == ["dissolve", "slide", "wipe", "zoom"]
     # layout/transition_in stay optional so the LLM omitting them never breaks parsing
     assert "layout" not in scene["required"]
     assert "transition_in" not in scene["required"]
     assert scene["required"] == ["index", "narration", "visual_description", "duration_hint_sec"]
+
+
+def test_script_tool_schema_includes_hook_fields_as_optional():
+    from shortform.llm_client import SCRIPT_TOOL
+    props = SCRIPT_TOOL["input_schema"]["properties"]
+    assert props["hook_candidates"]["type"] == "array"
+    assert props["hook_candidates"]["items"]["type"] == "string"
+    assert props["hook_reason"]["type"] == "string"
+    # hooks stay optional so LLM omission never breaks the required-fields check
+    assert "hook_candidates" not in SCRIPT_TOOL["input_schema"]["required"]
+    assert "hook_reason" not in SCRIPT_TOOL["input_schema"]["required"]

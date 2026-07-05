@@ -10,6 +10,8 @@ SCRIPT_TOOL = {
         "type": "object",
         "properties": {
             "title": {"type": "string"},
+            "hook_candidates": {"type": "array", "items": {"type": "string"}},
+            "hook_reason": {"type": "string"},
             "scenes": {
                 "type": "array",
                 "items": {
@@ -20,7 +22,7 @@ SCRIPT_TOOL = {
                         "visual_description": {"type": "string"},
                         "duration_hint_sec": {"type": "number"},
                         "highlight_words": {"type": "array", "items": {"type": "string"}},
-                        "layout": {"type": "string", "enum": ["fullscreen", "polaroid", "split"]},
+                        "layout": {"type": "string", "enum": ["fullscreen", "polaroid", "split", "titlecard"]},
                         "transition_in": {"type": "string", "enum": ["dissolve", "slide", "wipe", "zoom"]},
                     },
                     "required": ["index", "narration", "visual_description", "duration_hint_sec"],
