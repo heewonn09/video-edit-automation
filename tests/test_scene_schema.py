@@ -40,6 +40,43 @@ def test_script_from_dict_passes_through_highlight_words():
     assert script.scenes[0].highlight_words == ["70만원"]
 
 
+def test_scene_layout_and_transition_default():
+    scene = Scene(1, "안녕하세요", "골목길", 5.0)
+    assert scene.layout == "fullscreen"
+    assert scene.transition_in == "dissolve"
+
+
+def test_script_from_dict_passes_through_layout_and_transition():
+    data = {
+        "title": "T",
+        "scenes": [
+            {
+                "index": 1,
+                "narration": "비교해볼게요",
+                "visual_description": "전후 사진",
+                "duration_hint_sec": 5,
+                "layout": "split",
+                "transition_in": "wipe",
+            }
+        ],
+    }
+    script = script_from_dict(data)
+    assert script.scenes[0].layout == "split"
+    assert script.scenes[0].transition_in == "wipe"
+
+
+def test_script_from_dict_defaults_layout_and_transition_when_missing():
+    data = {
+        "title": "T",
+        "scenes": [
+            {"index": 1, "narration": "안녕", "visual_description": "v", "duration_hint_sec": 4},
+        ],
+    }
+    script = script_from_dict(data)
+    assert script.scenes[0].layout == "fullscreen"
+    assert script.scenes[0].transition_in == "dissolve"
+
+
 def test_script_from_dict_skips_malformed_scene_and_keeps_the_rest():
     data = {
         "title": "T",

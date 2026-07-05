@@ -11,6 +11,8 @@ class Scene:
     visual_description: str
     duration_hint_sec: float
     highlight_words: list = field(default_factory=list)
+    layout: str = "fullscreen"
+    transition_in: str = "dissolve"
 
 
 @dataclass
@@ -32,6 +34,8 @@ def script_from_dict(data: dict) -> Script:
                 visual_description=s["visual_description"],
                 duration_hint_sec=s["duration_hint_sec"],
                 highlight_words=s.get("highlight_words", []),
+                layout=s.get("layout", "fullscreen"),
+                transition_in=s.get("transition_in", "dissolve"),
             ))
         except KeyError as e:
             logger.warning(f"씬 {i} 파싱 실패 (누락된 필드: {e}) — 스킵")
