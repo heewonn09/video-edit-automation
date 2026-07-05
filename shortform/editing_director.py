@@ -7,7 +7,7 @@
 from dataclasses import dataclass
 
 # 렌더 가능한 레이아웃. ORDERED_LAYOUTS는 결정적 교체(가드레일 2)에 쓴다.
-ORDERED_LAYOUTS = ["fullscreen", "polaroid", "split"]
+ORDERED_LAYOUTS = ["fullscreen", "polaroid", "split", "titlecard"]
 LAYOUTS = set(ORDERED_LAYOUTS)
 
 # LLM이 내는 친숙한 전환 이름 → ffmpeg xfade 이름.
@@ -44,8 +44,8 @@ def resolve_editing_plan(scenes) -> list:
     if not plans:
         return plans
 
-    # 가드레일 1: 강한 오프닝(전체화면 + 큰 자막).
-    plans[0].layout = "fullscreen"
+    # 가드레일 1: 강한 오프닝 — 훅을 디자인된 타이틀 카드로 시작.
+    plans[0].layout = "titlecard"
 
     # 가드레일 2: 앞→뒤 1회 스캔하며 3연속 동일 layout을 깬다.
     # 3번째를 직전 두 개(=같은 값)와 다른 첫 유효 layout으로 바꾼다.

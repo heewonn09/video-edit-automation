@@ -15,7 +15,8 @@ def test_maps_transition_names_to_xfade():
     ]
     plans = resolve_editing_plan(scenes)
     assert [p.transition for p in plans] == ["fade", "slideleft", "wipeup", "circleopen"]
-    assert [p.layout for p in plans] == ["fullscreen", "polaroid", "split", "fullscreen"]
+    # first scene is forced to titlecard (hook), the rest keep the LLM's choice
+    assert [p.layout for p in plans] == ["titlecard", "polaroid", "split", "fullscreen"]
 
 
 def test_invalid_layout_falls_back_to_fullscreen():
@@ -30,10 +31,16 @@ def test_invalid_transition_falls_back_to_dissolve():
     assert plans[1].transition == "fade"
 
 
-def test_first_scene_is_forced_fullscreen_hook():
+def test_first_scene_is_forced_titlecard_hook():
     scenes = [_scene(1, "polaroid"), _scene(2, "split")]
     plans = resolve_editing_plan(scenes)
-    assert plans[0].layout == "fullscreen"
+    assert plans[0].layout == "titlecard"
+
+
+def test_titlecard_is_a_valid_layout_for_middle_scenes():
+    scenes = [_scene(1, "fullscreen"), _scene(2, "titlecard"), _scene(3, "split")]
+    plans = resolve_editing_plan(scenes)
+    assert plans[1].layout == "titlecard"
 
 
 def test_breaks_three_in_a_row_layout():
@@ -64,10 +71,10 @@ def test_empty_scenes_returns_empty():
     assert resolve_editing_plan([]) == []
 
 
-def test_single_scene_is_forced_fullscreen():
+def test_single_scene_is_forced_titlecard():
     plans = resolve_editing_plan([_scene(1, "split", "wipe")])
     assert len(plans) == 1
-    assert plans[0].layout == "fullscreen"
+    assert plans[0].layout == "titlecard"
     assert plans[0].transition == "wipeup"
 
 
