@@ -45,8 +45,8 @@ COUNTUP_STEP_SEC = 0.09
 # PIP 인셋 (같은 이미지의 다른 크롭)
 PIP_W, PIP_H = 352, 264
 PIP_BORDER = 10
-PIP_X = 660
-PIP_Y = MARGIN_HEIGHT - 120            # 여백/사진 경계에 걸침
+PIP_X = 672
+PIP_Y = MARGIN_HEIGHT + 36             # 사진 영역 우상단 (여백의 칩과 겹치지 않게)
 
 _NUMBER = re.compile(r"\d[\d,]*")
 # '70만 원' 같은 수량 단위가 줄바꿈에서 갈라지지 않도록 NBSP로 묶는다.
