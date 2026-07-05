@@ -4,11 +4,16 @@ from unittest.mock import patch
 from shortform.title_card import (
     CARD_BG_COLOR,
     MARGIN_HEIGHT,
+    NUM_COLOR,
     PHOTO_HEIGHT,
     build_hook_ass,
     build_title_card_filter_complex,
     derive_palette,
 )
+
+
+def _dialogues(ass):
+    return [l for l in ass.splitlines() if l.startswith("Dialogue")]
 
 
 def test_filter_complex_builds_solid_background_canvas():
@@ -45,67 +50,80 @@ def test_derive_palette_derives_tinted_colors_from_image(tmp_path):
     Image.new("RGB", (64, 64), (30, 80, 200)).save(img_path)
 
     palette = derive_palette(img_path)
-    # bg is a light tint (high value) and accent a deep saturated colour — both hue-derived,
-    # so a blue image must not return the warm default background
     assert palette["bg"] != CARD_BG_COLOR
     assert re.fullmatch(r"0x[0-9A-F]{6}", palette["bg"])
     assert re.fullmatch(r"&H00[0-9A-F]{6}&", palette["accent_ass"])
 
 
-def test_build_hook_ass_styles_highlight_phrase_as_accent():
-    ass = build_hook_ass("주변 시세보다 무려, 어마어마한 퀄리티! 가능할까요?", ["퀄리티"], 4.0)
-    accent_lines = [l for l in ass.splitlines() if l.startswith("Dialogue") and "HookAccent" in l]
-    base_lines = [l for l in ass.splitlines() if l.startswith("Dialogue") and "HookBase" in l]
-    assert len(accent_lines) == 1
-    assert "퀄리티" in accent_lines[0]
-    assert len(base_lines) == 2
-
-
-def test_build_hook_ass_lines_enter_staggered_with_motion():
-    ass = build_hook_ass("첫 줄입니다. 둘째 줄이에요. 셋째 줄!", [], 4.0)
-    dialogue = [l for l in ass.splitlines() if l.startswith("Dialogue")]
-    assert len(dialogue) == 3
-    # staggered entrance: start times strictly increase
-    starts = [l.split(",")[1] for l in dialogue]
-    assert starts == sorted(starts) and len(set(starts)) == 3
-    # motion + fade on every line
-    for line in dialogue:
-        assert r"\move(540," in line
-        assert r"\fad(" in line
-    # y destinations stay inside the top margin
-    ys = [float(m.group(1)) for l in dialogue for m in [re.search(r"\\move\(540,[0-9.]+,540,([0-9.]+)", l)] if m]
-    assert all(0 < y < MARGIN_HEIGHT for y in ys)
-
-
-def test_build_hook_ass_accent_line_has_scale_pop():
+def test_accent_phrase_gets_rounded_card_with_shadow_behind():
     ass = build_hook_ass("평범한 도입부. 대박 사건!", ["대박"], 4.0)
-    accent = [l for l in ass.splitlines() if l.startswith("Dialogue") and "HookAccent" in l][0]
-    assert r"\fscx" in accent and r"\t(" in accent
+    dialogue = _dialogues(ass)
+    # drawing events (\p1) exist: one shadow + one card for the accent phrase
+    drawings = [l for l in dialogue if r"\p1" in l]
+    assert len(drawings) >= 2
+    # shadow sits on a lower layer than the card, card lower than text
+    layers = [int(l.split(",")[0].split(" ")[1]) for l in dialogue]
+    assert min(layers) == 0 and max(layers) >= 2
+    # rounded-rect path uses bezier corners
+    assert any(" b " in l for l in drawings)
 
 
-def test_build_hook_ass_animates_number_count_up():
-    ass = build_hook_ass("무려 70만 원 저렴합니다", ["70만 원"], 4.0)
-    dialogue = [l for l in ass.splitlines() if l.startswith("Dialogue")]
-    # count-up emits several short-lived events with increasing values, ending on the real number
-    assert len(dialogue) >= 5
-    values = [int(m.group(1)) for l in dialogue for m in [re.search(r"}[^0-9]*(\d+)만 원", l)] if m]
+def test_accent_card_uses_palette_color_as_fill():
+    palette = {"bg": "0x101820", "accent_ass": "&H00AA5511&", "base_ass": "&H00222222&"}
+    ass = build_hook_ass("대박 사건!", ["대박"], 4.0, palette=palette)
+    drawings = [l for l in _dialogues(ass) if r"\p1" in l]
+    assert any("&H00AA5511&" in l for l in drawings)
+
+
+def test_base_phrase_gets_white_pill():
+    ass = build_hook_ass("평범한 도입부. 대박 사건!", ["대박"], 4.0)
+    drawings = [l for l in _dialogues(ass) if r"\p1" in l]
+    assert any("&H00FFFFFF&" in l for l in drawings)
+
+
+def test_number_inside_accent_card_is_big_and_gold():
+    ass = build_hook_ass("최대 70만 원 아낍니다", ["70만 원"], 4.0)
+    texts = [l for l in _dialogues(ass) if r"\p1" not in l]
+    final = texts[-1]
+    assert NUM_COLOR in final
+    assert r"\fs" in final  # inline size mixing around the number
+
+
+def test_count_up_reemits_text_but_draws_card_once():
+    ass = build_hook_ass("최대 70만 원 아낍니다", ["70만 원"], 4.0)
+    dialogue = _dialogues(ass)
+    texts = [l for l in dialogue if r"\p1" not in l]
+    drawings = [l for l in dialogue if r"\p1" in l]
+    plains = [re.sub(r"\{[^}]*\}", "", l) for l in texts]
+    values = [int(m.group(1)) for p in plains for m in [re.search(r"(\d+)만", p)] if m]
+    assert len(values) >= 5
     assert values == sorted(values)
     assert values[-1] == 70
-    assert "70만 원" in dialogue[-1]
+    # card + shadow drawn exactly once each (no flicker during count-up)
+    assert len(drawings) == 2
 
 
-def test_build_hook_ass_without_numbers_single_phrase_is_one_accent_event():
-    ass = build_hook_ass("전세보다 훨씬 싸다", ["훨씬"], 4.0)
-    dialogue = [l for l in ass.splitlines() if l.startswith("Dialogue")]
-    assert len(dialogue) == 1
-    assert "HookAccent" in dialogue[0]
+def test_phrases_enter_staggered():
+    ass = build_hook_ass("첫 문장입니다. 둘째 문장이에요!", [], 4.0)
+    dialogue = _dialogues(ass)
+    starts = sorted({l.split(",")[1] for l in dialogue})
+    assert len(starts) >= 2  # later phrase starts later
 
 
-def test_build_hook_ass_uses_palette_colors_in_styles():
-    palette = {"bg": "0x101820", "accent_ass": "&H00AA5511&", "base_ass": "&H00222222&"}
-    ass = build_hook_ass("한 줄 훅", [], 4.0, palette=palette)
-    assert "&H00AA5511&" in ass
-    assert "&H00222222&" in ass
+def test_cards_pop_in_with_scale_animation():
+    ass = build_hook_ass("대박 사건!", ["대박"], 4.0)
+    dialogue = _dialogues(ass)
+    assert any(r"\fscx" in l and r"\t(" in l for l in dialogue)
+
+
+def test_long_phrase_wraps_at_word_boundary():
+    ass = build_hook_ass("렌트카 최대 70만 원 아끼는 방법을 알려드립니다", ["70만 원"], 4.0)
+    texts = [l for l in _dialogues(ass) if r"\p1" not in l]
+    final = texts[-1]
+    assert r"\N" in final
+    # the wrap must not split the number unit "70만"
+    plain = re.sub(r"\{[^}]*\}", "", final).replace(r"\N", "")
+    assert "70만" in plain
 
 
 @patch("shortform.title_card.burn_ass_subtitles")
