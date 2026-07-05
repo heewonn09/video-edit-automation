@@ -19,6 +19,8 @@ class Scene:
 class Script:
     title: str
     scenes: list
+    hook_candidates: list = field(default_factory=list)
+    hook_reason: str = ""
 
     def total_duration_sec(self) -> float:
         return sum(s.duration_hint_sec for s in self.scenes)
@@ -43,4 +45,9 @@ def script_from_dict(data: dict) -> Script:
     if data["scenes"] and not scenes:
         raise RuntimeError("모든 씬 파싱에 실패하여 스크립트를 생성할 수 없습니다.")
 
-    return Script(title=data["title"], scenes=scenes)
+    return Script(
+        title=data["title"],
+        scenes=scenes,
+        hook_candidates=data.get("hook_candidates", []),
+        hook_reason=data.get("hook_reason", ""),
+    )
