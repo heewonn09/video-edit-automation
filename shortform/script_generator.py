@@ -3,11 +3,18 @@ from shortform.input_handler import classify_input
 from shortform.llm_client import generate_script_json
 from shortform.scene_schema import Script, script_from_dict
 
+EDITING_DIRECTION_GUIDE = """\
+각 씬마다 내용에 맞는 화면 구성(layout)과 전환(transition_in)을 함께 정해줘.
+- layout: 풍경·전체 임팩트·강한 시작은 fullscreen, 인물·특정 순간 강조는 polaroid, 비교·전후·둘을 나란히 보여줄 땐 split.
+- transition_in: 회상·감정은 dissolve, 항목을 나열하며 넘어갈 땐 slide, 장소·장면이 바뀌면 wipe, 강조·훅은 zoom.
+영상이 단조롭지 않도록 연속된 씬은 되도록 다른 layout을 쓰되, 억지로 바꾸지 말고 내용에 맞게 정해줘."""
+
 TOPIC_PROMPT_TEMPLATE = """\
 다음 주제로 30~60초 분량의 숏폼 영상 나레이션 스크립트를 작성해줘.
 영상 전체를 대표하는 짧고 매력적인 제목을 title로 함께 지어줘.
 씬 단위로 나누고, 각 씬마다 나레이션과 어울리는 영상 연출 지시(visual_description)를 함께 제시해줘.
 각 씬의 나레이션 문장 안에 실제로 등장하는 단어 중, 시청자 시선을 끌 핵심 키워드를 1~3개 골라 highlight_words로 표시해줘.
+{editing_guide}
 
 주제: {topic}
 """
@@ -17,6 +24,7 @@ ARTICLE_PROMPT_TEMPLATE = """\
 영상 전체를 대표하는 짧고 매력적인 제목을 title로 함께 지어줘(기사 제목을 그대로 쓰지 말고 숏폼에 맞게 재구성).
 핵심 내용을 요약하고, 씬 단위로 나누어 각 씬마다 나레이션과 어울리는 영상 연출 지시(visual_description)를 함께 제시해줘.
 각 씬의 나레이션 문장 안에 실제로 등장하는 단어 중, 시청자 시선을 끌 핵심 키워드를 1~3개 골라 highlight_words로 표시해줘.
+{editing_guide}
 
 기사 제목: {title}
 기사 본문: {text}
@@ -28,10 +36,12 @@ def generate_script(raw_input: str) -> Script:
 
     if input_type == "url":
         article = fetch_article(raw_input)
-        prompt = ARTICLE_PROMPT_TEMPLATE.format(title=article.title, text=article.text)
+        prompt = ARTICLE_PROMPT_TEMPLATE.format(
+            title=article.title, text=article.text, editing_guide=EDITING_DIRECTION_GUIDE
+        )
         fallback_title = article.title
     else:
-        prompt = TOPIC_PROMPT_TEMPLATE.format(topic=raw_input)
+        prompt = TOPIC_PROMPT_TEMPLATE.format(topic=raw_input, editing_guide=EDITING_DIRECTION_GUIDE)
         fallback_title = raw_input
 
     data = generate_script_json(prompt)

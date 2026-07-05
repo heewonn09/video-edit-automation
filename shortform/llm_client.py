@@ -20,6 +20,8 @@ SCRIPT_TOOL = {
                         "visual_description": {"type": "string"},
                         "duration_hint_sec": {"type": "number"},
                         "highlight_words": {"type": "array", "items": {"type": "string"}},
+                        "layout": {"type": "string", "enum": ["fullscreen", "polaroid", "split"]},
+                        "transition_in": {"type": "string", "enum": ["dissolve", "slide", "wipe", "zoom"]},
                     },
                     "required": ["index", "narration", "visual_description", "duration_hint_sec"],
                 },

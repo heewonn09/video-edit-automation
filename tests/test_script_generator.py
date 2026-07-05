@@ -1,15 +1,28 @@
 from unittest.mock import patch
-from shortform.script_generator import ARTICLE_PROMPT_TEMPLATE, TOPIC_PROMPT_TEMPLATE, generate_script
+from shortform.script_generator import (
+    ARTICLE_PROMPT_TEMPLATE,
+    EDITING_DIRECTION_GUIDE,
+    TOPIC_PROMPT_TEMPLATE,
+    generate_script,
+)
 
 
 def test_topic_prompt_asks_for_a_title():
-    prompt = TOPIC_PROMPT_TEMPLATE.format(topic="주제")
+    prompt = TOPIC_PROMPT_TEMPLATE.format(topic="주제", editing_guide=EDITING_DIRECTION_GUIDE)
     assert "제목" in prompt
 
 
 def test_article_prompt_asks_for_a_title():
-    prompt = ARTICLE_PROMPT_TEMPLATE.format(title="기사 제목", text="본문")
+    prompt = ARTICLE_PROMPT_TEMPLATE.format(
+        title="기사 제목", text="본문", editing_guide=EDITING_DIRECTION_GUIDE
+    )
     assert "제목" in prompt.split("기사 제목:")[0]
+
+
+def test_prompt_includes_editing_direction_guide():
+    prompt = TOPIC_PROMPT_TEMPLATE.format(topic="주제", editing_guide=EDITING_DIRECTION_GUIDE)
+    assert "layout" in prompt
+    assert "transition_in" in prompt
 
 
 @patch("shortform.script_generator.generate_script_json")

@@ -76,3 +76,15 @@ def test_script_tool_schema_includes_highlight_words():
     scene_props = SCRIPT_TOOL["input_schema"]["properties"]["scenes"]["items"]["properties"]
     assert "highlight_words" in scene_props
     assert scene_props["highlight_words"]["type"] == "array"
+
+
+def test_script_tool_schema_includes_layout_and_transition_enums():
+    from shortform.llm_client import SCRIPT_TOOL
+    scene = SCRIPT_TOOL["input_schema"]["properties"]["scenes"]["items"]
+    scene_props = scene["properties"]
+    assert scene_props["layout"]["enum"] == ["fullscreen", "polaroid", "split"]
+    assert scene_props["transition_in"]["enum"] == ["dissolve", "slide", "wipe", "zoom"]
+    # layout/transition_in stay optional so the LLM omitting them never breaks parsing
+    assert "layout" not in scene["required"]
+    assert "transition_in" not in scene["required"]
+    assert scene["required"] == ["index", "narration", "visual_description", "duration_hint_sec"]
