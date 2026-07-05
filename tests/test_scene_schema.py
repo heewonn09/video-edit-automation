@@ -77,6 +77,23 @@ def test_script_from_dict_defaults_layout_and_transition_when_missing():
     assert script.scenes[0].transition_in == "dissolve"
 
 
+def test_script_from_dict_passes_through_chips():
+    data = {
+        "title": "T",
+        "scenes": [
+            {"index": 1, "narration": "n", "visual_description": "v", "duration_hint_sec": 4,
+             "chips": [{"icon": "🏠", "label": "2층 주택"}]},
+        ],
+    }
+    script = script_from_dict(data)
+    assert script.scenes[0].chips == [{"icon": "🏠", "label": "2층 주택"}]
+
+
+def test_scene_chips_default_to_empty():
+    scene = Scene(1, "n", "v", 4.0)
+    assert scene.chips == []
+
+
 def test_script_from_dict_passes_through_hook_fields():
     data = {
         "title": "T",

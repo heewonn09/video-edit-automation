@@ -150,6 +150,7 @@ def test_render_script_routes_titlecard_layout_to_title_card_builder(
         work_dir / "clip_01.mp4",
         hook_text="훅 나레이션",
         highlight_words=["훅"],
+        chips=[],
     )
 
 

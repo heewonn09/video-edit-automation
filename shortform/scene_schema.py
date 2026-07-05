@@ -13,6 +13,7 @@ class Scene:
     highlight_words: list = field(default_factory=list)
     layout: str = "fullscreen"
     transition_in: str = "dissolve"
+    chips: list = field(default_factory=list)  # [{"icon": 이모지, "label": 짧은 라벨}]
 
 
 @dataclass
@@ -38,6 +39,7 @@ def script_from_dict(data: dict) -> Script:
                 highlight_words=s.get("highlight_words", []),
                 layout=s.get("layout", "fullscreen"),
                 transition_in=s.get("transition_in", "dissolve"),
+                chips=s.get("chips", []),
             ))
         except KeyError as e:
             logger.warning(f"씬 {i} 파싱 실패 (누락된 필드: {e}) — 스킵")

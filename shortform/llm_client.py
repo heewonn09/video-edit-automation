@@ -24,6 +24,17 @@ SCRIPT_TOOL = {
                         "highlight_words": {"type": "array", "items": {"type": "string"}},
                         "layout": {"type": "string", "enum": ["fullscreen", "polaroid", "split", "titlecard"]},
                         "transition_in": {"type": "string", "enum": ["dissolve", "slide", "wipe", "zoom"]},
+                        "chips": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "icon": {"type": "string"},
+                                    "label": {"type": "string"},
+                                },
+                                "required": ["icon", "label"],
+                            },
+                        },
                     },
                     "required": ["index", "narration", "visual_description", "duration_hint_sec"],
                 },

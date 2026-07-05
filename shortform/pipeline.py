@@ -82,6 +82,7 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
                         media.path, audio_paths[scene.index], duration, clip_path,
                         hook_text=scene.narration,
                         highlight_words=scene.highlight_words,
+                        chips=scene.chips,
                     )
                 else:  # fullscreen
                     build_scene_clip(

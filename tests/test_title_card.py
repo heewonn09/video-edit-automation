@@ -70,9 +70,44 @@ def test_accent_phrase_gets_rounded_card_with_shadow_behind():
 
 def test_accent_card_uses_palette_color_as_fill():
     palette = {"bg": "0x101820", "accent_ass": "&H00AA5511&", "base_ass": "&H00222222&"}
-    ass = build_hook_ass("대박 사건!", ["대박"], 4.0, palette=palette)
+    ass = build_hook_ass("최대 70만 원 아낍니다!", ["70만 원"], 4.0, palette=palette)
     drawings = [l for l in _dialogues(ass) if r"\p1" in l]
     assert any("&H00AA5511&" in l for l in drawings)
+
+
+def test_accent_without_number_renders_two_tone_headline():
+    ass = build_hook_ass("프리미엄 이층 단독주택 완전 대박 풀옵션입니다!", ["프리미엄"], 4.0)
+    dialogue = _dialogues(ass)
+    # headline is naked typography — no card drawing for it
+    assert not any(r"\p1" in l for l in dialogue)
+    headline = dialogue[0]
+    from shortform.title_card import ACCENT_COLOR
+    assert ACCENT_COLOR in headline      # line 1: deep accent colour
+    assert NUM_COLOR in headline         # line 2: gold
+    assert r"\N" in headline
+
+
+def test_chips_render_circles_icons_and_labels():
+    chips = [
+        {"icon": "🏠", "label": "2층 주택"},
+        {"icon": "🌳", "label": "넓은 정원"},
+        {"icon": "🚗", "label": "주차 2대"},
+    ]
+    ass = build_hook_ass("대박 훅!", ["대박"], 4.0, chips=chips)
+    dialogue = _dialogues(ass)
+    circles = [l for l in dialogue if r"\p1" in l and "&H00FFFFFF&" in l]
+    assert len(circles) == 3
+    assert len([l for l in dialogue if "ChipIcon" in l]) == 3
+    labels = [l for l in dialogue if "ChipLabel" in l]
+    assert len(labels) == 3
+    assert any("넓은 정원" in l for l in labels)
+
+
+def test_filter_complex_includes_pip_inset():
+    result = build_title_card_filter_complex(120)
+    assert "split=2[main_src][pip_src]" in result
+    assert ":white[pip]" in result           # white border via pad
+    assert result.count("overlay") == 2      # photo + pip
 
 
 def test_base_phrase_gets_white_pill():
