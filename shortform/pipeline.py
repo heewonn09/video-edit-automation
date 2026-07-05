@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 from shortform.captions import build_ass_from_scenes
+from shortform.editing_director import resolve_editing_plan
 from shortform.media_matcher import resolve_scene_media
 from shortform.polaroid import build_polaroid_scene_clip
 from shortform.renderer import assemble_with_transitions, build_scene_clip
@@ -44,25 +45,41 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
     else:
         scene_media = {}
 
+    # 편집 감독: 실제로 렌더될 씬만 대상으로 레이아웃/전환 계획을 세운다.
+    # (훅 강제·단조 방지 가드레일이 첫 렌더 씬과 실제 시퀀스 기준으로 적용됨)
+    renderable_scenes = [
+        scene for scene in script.scenes
+        if scene.index in audio_paths and scene.index in scene_media
+    ]
+    plans = resolve_editing_plan(renderable_scenes)
+    plans_by_index = {scene.index: plan for scene, plan in zip(renderable_scenes, plans)}
+
     successful_scenes = []
     clip_paths = []
     durations = []
+    transitions = []
     for scene in script.scenes:
         if scene.index not in audio_paths or scene.index not in scene_media:
             continue
         media = scene_media[scene.index]
         duration = durations_by_index[scene.index]
+        plan = plans_by_index[scene.index]
         clip_path = work_dir / f"clip_{scene.index:02d}.mp4"
         try:
             if media.media_type == "image":
-                if scene.index % 2 == 0:
+                if plan.layout == "polaroid":
                     build_polaroid_scene_clip(
                         media.path, audio_paths[scene.index], duration, clip_path,
                         tilt_variant=scene.index,
                     )
-                else:
+                elif plan.layout == "split":
                     build_split_screen_scene_clip(
                         media.path, audio_paths[scene.index], duration, clip_path,
+                    )
+                else:  # fullscreen
+                    build_scene_clip(
+                        media.path, "image", audio_paths[scene.index], duration, clip_path,
+                        pan_variant=scene.index,
                     )
             else:
                 build_scene_clip(
@@ -75,6 +92,7 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
         successful_scenes.append(scene)
         clip_paths.append(clip_path)
         durations.append(duration)
+        transitions.append(plan.transition)
 
     logger.info(f"씬 처리 완료: {len(successful_scenes)}/{len(script.scenes)}개 성공")
 
@@ -83,5 +101,6 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
 
     ass_text = build_ass_from_scenes(successful_scenes, durations, TRANSITION_DURATION_SEC)
     return assemble_with_transitions(
-        clip_paths, durations, ass_text, out_path, transition_duration=TRANSITION_DURATION_SEC
+        clip_paths, durations, ass_text, out_path,
+        transition_duration=TRANSITION_DURATION_SEC, transitions=transitions,
     )
