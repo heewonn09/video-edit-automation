@@ -13,6 +13,10 @@ from shortform.tts import get_audio_duration
 MOODS = {"bright", "calm", "exciting", "emotional"}
 DEFAULT_MOOD = "calm"
 
+# 믹스 볼륨: 실음원(풀스케일 음악)은 크게 감쇠, 합성 패드는 이미 조용해서 덜 감쇠.
+TRACK_MIX_VOLUME = 0.15
+PAD_MIX_VOLUME = 0.6
+
 AUDIO_EXTS = (".mp3", ".wav", ".m4a")
 
 # 무드별 코드 구성음(Hz)과 트레몰로 속도 — 합성 패드의 성격을 가른다.
@@ -65,7 +69,7 @@ def synthesize_bgm_pad(mood, duration, out_path):
     return out_path
 
 
-def mix_bgm(video_path, bgm_path, out_path, music_volume=0.15):
+def mix_bgm(video_path, bgm_path, out_path, music_volume=TRACK_MIX_VOLUME):
     """완성 영상의 오디오 아래에 BGM을 저볼륨으로 깐다.
 
     BGM은 무한 루프(-stream_loop -1)로 영상 길이를 채우고, 1초 페이드인 +
@@ -79,7 +83,7 @@ def mix_bgm(video_path, bgm_path, out_path, music_volume=0.15):
         f"[1:a]volume={music_volume},"
         f"afade=t=in:d=1,"
         f"afade=t=out:st={fade_out_start}:d=2[m];"
-        f"[0:a][m]amix=inputs=2:duration=first:dropout_transition=0[a]"
+        f"[0:a][m]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[a]"
     )
     cmd = [
         "ffmpeg", "-y",

@@ -2,7 +2,13 @@ import logging
 import shutil
 from pathlib import Path
 
-from shortform.bgm import mix_bgm, select_bgm_track, synthesize_bgm_pad
+from shortform.bgm import (
+    PAD_MIX_VOLUME,
+    TRACK_MIX_VOLUME,
+    mix_bgm,
+    select_bgm_track,
+    synthesize_bgm_pad,
+)
 from shortform.captions import build_ass_from_scenes
 from shortform.editing_director import resolve_editing_plan
 from shortform.media_matcher import resolve_scene_media
@@ -123,7 +129,10 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
             track = synthesize_bgm_pad(
                 script.mood, get_audio_duration(pre_bgm), work_dir / "bgm_pad.wav"
             )
-        return mix_bgm(pre_bgm, track, out_path)
+            music_volume = PAD_MIX_VOLUME     # 합성 패드는 자체가 조용해 덜 감쇠
+        else:
+            music_volume = TRACK_MIX_VOLUME   # 실음원은 나레이션 아래로 크게 감쇠
+        return mix_bgm(pre_bgm, track, out_path, music_volume=music_volume)
     except Exception as e:
         logger.warning(f"BGM 삽입 실패 ({e}) — BGM 없이 완성합니다")
         out_path = Path(out_path)

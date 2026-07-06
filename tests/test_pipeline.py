@@ -60,7 +60,7 @@ def test_render_script_wires_all_stages(
     # assembly renders to the intermediate pre-bgm path, then bgm is mixed onto out_path
     assert mock_assemble.call_args[0][3] == work_dir / "pre_bgm.mp4"
     assert mock_assemble.call_args.kwargs["transitions"] == ["fade"]
-    mock_mix.assert_called_once_with(pre_bgm, tmp_path / "calm_track.mp3", out_path)
+    mock_mix.assert_called_once_with(pre_bgm, tmp_path / "calm_track.mp3", out_path, music_volume=0.15)
     assert result == out_path
 
 
@@ -353,7 +353,8 @@ def test_render_script_synthesizes_pad_when_no_local_track(
 
     mock_select.assert_called_once_with("exciting")
     mock_synth.assert_called_once_with("exciting", 4.0, work_dir / "bgm_pad.wav")
-    mock_mix.assert_called_once_with(pre_bgm, pad, out_path)
+    # synth pad is already quiet → mixed hotter than a full-scale local track
+    mock_mix.assert_called_once_with(pre_bgm, pad, out_path, music_volume=0.6)
     assert result == out_path
 
 

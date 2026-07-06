@@ -66,7 +66,8 @@ def test_mix_bgm_loops_ducks_and_fades_under_narration(mock_run, mock_dur, tmp_p
     assert "volume=0.15" in fc
     assert "afade=t=in:d=1" in fc
     assert "afade=t=out:st=48.0:d=2" in fc      # duration 50 → fade-out starts at 48
-    assert "amix=inputs=2:duration=first" in fc
+    # normalize=0: amix must not attenuate the narration to make room for bgm
+    assert "amix=inputs=2:duration=first:dropout_transition=0:normalize=0" in fc
     # video stream is copied, not re-encoded
     ci = cmd.index("-c:v")
     assert cmd[ci + 1] == "copy"
