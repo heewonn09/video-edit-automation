@@ -77,6 +77,28 @@ def test_script_from_dict_defaults_layout_and_transition_when_missing():
     assert script.scenes[0].transition_in == "dissolve"
 
 
+def test_script_from_dict_passes_through_mood():
+    data = {
+        "title": "T",
+        "mood": "exciting",
+        "scenes": [
+            {"index": 1, "narration": "n", "visual_description": "v", "duration_hint_sec": 4},
+        ],
+    }
+    script = script_from_dict(data)
+    assert script.mood == "exciting"
+
+
+def test_script_mood_defaults_to_calm():
+    data = {
+        "title": "T",
+        "scenes": [
+            {"index": 1, "narration": "n", "visual_description": "v", "duration_hint_sec": 4},
+        ],
+    }
+    assert script_from_dict(data).mood == "calm"
+
+
 def test_script_from_dict_passes_through_chips():
     data = {
         "title": "T",

@@ -12,6 +12,7 @@ SCRIPT_TOOL = {
             "title": {"type": "string"},
             "hook_candidates": {"type": "array", "items": {"type": "string"}},
             "hook_reason": {"type": "string"},
+            "mood": {"type": "string", "enum": ["bright", "calm", "exciting", "emotional"]},
             "scenes": {
                 "type": "array",
                 "items": {

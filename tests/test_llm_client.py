@@ -99,3 +99,10 @@ def test_script_tool_schema_includes_hook_fields_as_optional():
     # hooks stay optional so LLM omission never breaks the required-fields check
     assert "hook_candidates" not in SCRIPT_TOOL["input_schema"]["required"]
     assert "hook_reason" not in SCRIPT_TOOL["input_schema"]["required"]
+
+
+def test_script_tool_schema_includes_mood_enum_as_optional():
+    from shortform.llm_client import SCRIPT_TOOL
+    props = SCRIPT_TOOL["input_schema"]["properties"]
+    assert props["mood"]["enum"] == ["bright", "calm", "exciting", "emotional"]
+    assert "mood" not in SCRIPT_TOOL["input_schema"]["required"]

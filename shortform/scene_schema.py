@@ -22,6 +22,7 @@ class Script:
     scenes: list
     hook_candidates: list = field(default_factory=list)
     hook_reason: str = ""
+    mood: str = "calm"  # BGM 무드: bright | calm | exciting | emotional
 
     def total_duration_sec(self) -> float:
         return sum(s.duration_hint_sec for s in self.scenes)
@@ -52,4 +53,5 @@ def script_from_dict(data: dict) -> Script:
         scenes=scenes,
         hook_candidates=data.get("hook_candidates", []),
         hook_reason=data.get("hook_reason", ""),
+        mood=data.get("mood", "calm"),
     )
