@@ -1,6 +1,8 @@
 import logging
+import shutil
 from pathlib import Path
 
+from shortform.bgm import mix_bgm, select_bgm_track, synthesize_bgm_pad
 from shortform.captions import build_ass_from_scenes
 from shortform.editing_director import resolve_editing_plan
 from shortform.media_matcher import resolve_scene_media
@@ -108,7 +110,23 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
         raise RuntimeError("모든 씬 처리에 실패하여 영상을 생성할 수 없습니다.")
 
     ass_text = build_ass_from_scenes(successful_scenes, durations, TRANSITION_DURATION_SEC)
-    return assemble_with_transitions(
-        clip_paths, durations, ass_text, out_path,
+    pre_bgm = assemble_with_transitions(
+        clip_paths, durations, ass_text, work_dir / "pre_bgm.mp4",
         transition_duration=TRANSITION_DURATION_SEC, transitions=transitions,
     )
+
+    # BGM: bgm/ 폴더의 무드 트랙 우선, 없으면 합성 패드 폴백.
+    # 어떤 실패든 BGM 없이 영상은 나온다 (부분 실패 철학).
+    try:
+        track = select_bgm_track(script.mood)
+        if track is None:
+            track = synthesize_bgm_pad(
+                script.mood, get_audio_duration(pre_bgm), work_dir / "bgm_pad.wav"
+            )
+        return mix_bgm(pre_bgm, track, out_path)
+    except Exception as e:
+        logger.warning(f"BGM 삽입 실패 ({e}) — BGM 없이 완성합니다")
+        out_path = Path(out_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(pre_bgm, out_path)
+        return out_path
