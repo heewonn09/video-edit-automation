@@ -1,3 +1,4 @@
+import json
 import logging
 import shutil
 from pathlib import Path
@@ -120,7 +121,19 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media",
     if not clip_paths:
         raise RuntimeError("모든 씬 처리에 실패하여 영상을 생성할 수 없습니다.")
 
-    ass_text = build_ass_from_scenes(successful_scenes, durations, TRANSITION_DURATION_SEC)
+    # 카라오케 자막용 어절 타이밍 (TTS가 남긴 사이드카 — 없거나 깨지면 그 씬만 폴백)
+    word_timings = {}
+    for scene in successful_scenes:
+        sidecar = audio_paths[scene.index].with_suffix(".words.json")
+        if sidecar.exists():
+            try:
+                word_timings[scene.index] = json.loads(sidecar.read_text(encoding="utf-8"))
+            except Exception as e:
+                logger.warning(f"씬 {scene.index} 단어 타이밍 로드 실패 ({e}) — 비례 배분 폴백")
+
+    ass_text = build_ass_from_scenes(
+        successful_scenes, durations, TRANSITION_DURATION_SEC, word_timings=word_timings
+    )
     pre_bgm = assemble_with_transitions(
         clip_paths, durations, ass_text, work_dir / "pre_bgm.mp4",
         transition_duration=TRANSITION_DURATION_SEC, transitions=transitions,

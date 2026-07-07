@@ -56,7 +56,9 @@ def test_render_script_wires_all_stages(
         pan_variant=1,
     )
 
-    mock_ass.assert_called_once_with(script.scenes, [4.0], TRANSITION_DURATION_SEC)
+    mock_ass.assert_called_once_with(
+        script.scenes, [4.0], TRANSITION_DURATION_SEC, word_timings={}
+    )
     # assembly renders to the intermediate pre-bgm path, then bgm is mixed onto out_path
     assert mock_assemble.call_args[0][3] == work_dir / "pre_bgm.mp4"
     assert mock_assemble.call_args.kwargs["transitions"] == ["fade"]
@@ -301,6 +303,39 @@ def test_render_script_skips_scene_with_failed_tts(
     assert mock_ass.call_args[0][2] == TRANSITION_DURATION_SEC
     assert "씬 2" in caplog.text
     assert result == out_path
+
+
+@patch("shortform.pipeline.mix_bgm")
+@patch("shortform.pipeline.select_bgm_track")
+@patch("shortform.pipeline.assemble_with_transitions")
+@patch("shortform.pipeline.build_scene_clip")
+@patch("shortform.pipeline.resolve_editing_plan")
+@patch("shortform.pipeline.build_ass_from_scenes")
+@patch("shortform.pipeline.resolve_scene_media")
+@patch("shortform.pipeline.get_audio_duration")
+@patch("shortform.pipeline.synthesize_narration")
+def test_render_script_loads_word_timing_sidecars_for_captions(
+    mock_tts, mock_duration, mock_resolve, mock_ass, mock_plan, mock_clip,
+    mock_assemble, mock_select, mock_mix, tmp_path
+):
+    script = Script(title="T", scenes=[Scene(1, "나레이션", "골목길", 4.0)])
+    work_dir = tmp_path / "media"
+    work_dir.mkdir()
+    timing = [{"text": "나레이션", "start": 0.1, "end": 0.9}]
+    import json as _json
+    (work_dir / "scene_01.words.json").write_text(_json.dumps(timing), encoding="utf-8")
+    mock_duration.return_value = 4.0
+    mock_resolve.return_value = {1: SceneMedia(1, tmp_path / "s.png", "image")}
+    mock_ass.return_value = "ASS_TEXT"
+    mock_plan.return_value = [ScenePlan(layout="fullscreen", transition="fade")]
+    mock_clip.return_value = work_dir / "clip_01.mp4"
+    mock_assemble.return_value = work_dir / "pre_bgm.mp4"
+    mock_select.return_value = tmp_path / "t.mp3"
+    mock_mix.return_value = tmp_path / "final.mp4"
+
+    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir)
+
+    assert mock_ass.call_args.kwargs["word_timings"] == {1: timing}
 
 
 @patch("shortform.pipeline.mix_bgm")
