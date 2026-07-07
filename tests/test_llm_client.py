@@ -101,6 +101,13 @@ def test_script_tool_schema_includes_hook_fields_as_optional():
     assert "hook_reason" not in SCRIPT_TOOL["input_schema"]["required"]
 
 
+def test_script_tool_schema_includes_motion_flag_as_optional():
+    from shortform.llm_client import SCRIPT_TOOL
+    scene = SCRIPT_TOOL["input_schema"]["properties"]["scenes"]["items"]
+    assert scene["properties"]["motion"]["type"] == "boolean"
+    assert "motion" not in scene["required"]
+
+
 def test_script_tool_schema_includes_mood_enum_as_optional():
     from shortform.llm_client import SCRIPT_TOOL
     props = SCRIPT_TOOL["input_schema"]["properties"]

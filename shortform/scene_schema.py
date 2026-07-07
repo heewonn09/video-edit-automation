@@ -14,6 +14,7 @@ class Scene:
     layout: str = "fullscreen"
     transition_in: str = "dissolve"
     chips: list = field(default_factory=list)  # [{"icon": 이모지, "label": 짧은 라벨}]
+    motion: bool = False  # 움직임이 내용 전달에 중요한 씬 — Veo 이미지-투-비디오 대상
 
 
 @dataclass
@@ -41,6 +42,7 @@ def script_from_dict(data: dict) -> Script:
                 layout=s.get("layout", "fullscreen"),
                 transition_in=s.get("transition_in", "dissolve"),
                 chips=s.get("chips", []),
+                motion=bool(s.get("motion", False)),
             ))
         except KeyError as e:
             logger.warning(f"씬 {i} 파싱 실패 (누락된 필드: {e}) — 스킵")

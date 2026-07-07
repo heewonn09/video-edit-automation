@@ -25,6 +25,7 @@ SCRIPT_TOOL = {
                         "highlight_words": {"type": "array", "items": {"type": "string"}},
                         "layout": {"type": "string", "enum": ["fullscreen", "polaroid", "split", "titlecard"]},
                         "transition_in": {"type": "string", "enum": ["dissolve", "slide", "wipe", "zoom"]},
+                        "motion": {"type": "boolean"},
                         "chips": {
                             "type": "array",
                             "items": {
