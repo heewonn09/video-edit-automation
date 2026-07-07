@@ -30,11 +30,24 @@ def test_cli_writes_script_json_and_renders_video(mock_generate, mock_render, tm
     assert mock_render.call_args[0][0] is script  # Script object
     assert mock_render.call_args[0][1] == Path("output") / f"{expected_slug}.mp4"  # output path
     assert mock_render.call_args[0][2] == "my_assets"  # assets path
+    assert mock_render.call_args.kwargs["max_motion_scenes"] == 2  # default
 
     captured = capsys.readouterr()
     assert "테스트 제목" in captured.out
     # Assert that the video path from render_script return value appears in output
     assert str(expected_video_path) in captured.out
+
+
+@patch("shortform.cli.render_script")
+@patch("shortform.cli.generate_script")
+def test_cli_motion_scenes_flag_threads_through(mock_generate, mock_render, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    mock_generate.return_value = Script(title="T", scenes=[Scene(1, "n", "v", 4.0)])
+    mock_render.return_value = tmp_path / "out.mp4"
+
+    main(["--topic", "주제", "--motion-scenes", "0"])
+
+    assert mock_render.call_args.kwargs["max_motion_scenes"] == 0
 
 
 def test_cli_requires_topic_or_url(capsys):

@@ -19,7 +19,7 @@ def _slugify(title: str) -> str:
     return slug[:40] or "script"
 
 
-def _process_one(raw_input: str, assets):
+def _process_one(raw_input: str, assets, motion_scenes=2):
     script = generate_script(raw_input)
 
     out_dir = Path("output") / "scripts"
@@ -37,7 +37,10 @@ def _process_one(raw_input: str, assets):
         print(f"    연출: {scene.visual_description}")
     print(f"\n스크립트 저장 위치: {out_path}")
 
-    video_path = render_script(script, Path("output") / f"{slug}.mp4", assets)
+    video_path = render_script(
+        script, Path("output") / f"{slug}.mp4", assets,
+        max_motion_scenes=motion_scenes,
+    )
     print(f"영상 저장 위치: {video_path}")
 
 
@@ -51,6 +54,8 @@ def main(argv=None):
     group.add_argument("--url", help="크롤링할 URL")
     group.add_argument("--batch", help="주제/URL을 한 줄씩 적은 파일 경로 (순차 처리)")
     parser.add_argument("--assets", default=None, help="씬 매칭에 사용할 로컬 자산 폴더 (선택)")
+    parser.add_argument("--motion-scenes", type=int, default=2,
+                        help="Veo AI 영상으로 만들 최대 씬 수 (0=끔, 기본 2 — 비용 주의)")
     args = parser.parse_args(argv)
 
     if args.batch:
@@ -62,14 +67,14 @@ def main(argv=None):
         for i, raw_input in enumerate(lines, 1):
             print(f"\n=== [{i}/{len(lines)}] {raw_input} ===")
             try:
-                _process_one(raw_input, args.assets)
+                _process_one(raw_input, args.assets, motion_scenes=args.motion_scenes)
             except Exception as e:
                 logger.error(f"배치 항목 실패 ({raw_input}): {e}")
                 continue
         return
 
     raw_input = args.topic if args.topic else args.url
-    _process_one(raw_input, args.assets)
+    _process_one(raw_input, args.assets, motion_scenes=args.motion_scenes)
 
 
 if __name__ == "__main__":

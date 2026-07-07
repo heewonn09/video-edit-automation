@@ -303,6 +303,49 @@ def test_render_script_skips_scene_with_failed_tts(
     assert result == out_path
 
 
+@patch("shortform.pipeline.mix_bgm")
+@patch("shortform.pipeline.select_bgm_track")
+@patch("shortform.pipeline.assemble_with_transitions")
+@patch("shortform.pipeline.build_scene_clip")
+@patch("shortform.pipeline.resolve_editing_plan")
+@patch("shortform.pipeline.build_ass_from_scenes")
+@patch("shortform.pipeline.resolve_scene_media")
+@patch("shortform.pipeline.get_audio_duration")
+@patch("shortform.pipeline.synthesize_narration")
+def test_render_script_passes_motion_indices_to_media_resolution(
+    mock_tts, mock_duration, mock_resolve, mock_ass, mock_plan, mock_clip,
+    mock_assemble, mock_select, mock_mix, tmp_path
+):
+    # scene 1 is the hook (excluded), scenes 2 and 3 are flagged, scene 4 flagged but over the cap
+    script = Script(
+        title="T",
+        scenes=[
+            Scene(1, "n", "v", 4.0, motion=True),
+            Scene(2, "n", "v", 4.0, motion=True),
+            Scene(3, "n", "v", 4.0, motion=True),
+            Scene(4, "n", "v", 4.0, motion=True),
+        ],
+    )
+    work_dir = tmp_path / "media"
+    mock_duration.return_value = 4.0
+    mock_resolve.return_value = {i: SceneMedia(i, tmp_path / f"s{i}.png", "image") for i in range(1, 5)}
+    mock_ass.return_value = "ASS_TEXT"
+    mock_plan.return_value = [ScenePlan(layout="fullscreen", transition="fade")] * 4
+    mock_clip.side_effect = lambda *a, **k: a[4]
+    mock_assemble.return_value = work_dir / "pre_bgm.mp4"
+    mock_select.return_value = tmp_path / "t.mp3"
+    mock_mix.return_value = tmp_path / "final.mp4"
+
+    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir)
+
+    assert mock_resolve.call_args.kwargs["motion_indices"] == {2, 3}
+
+    # max_motion_scenes=0 disables motion entirely
+    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir,
+                  max_motion_scenes=0)
+    assert mock_resolve.call_args.kwargs["motion_indices"] == set()
+
+
 @patch("shortform.pipeline.resolve_scene_media")
 @patch("shortform.pipeline.get_audio_duration")
 @patch("shortform.pipeline.synthesize_narration")

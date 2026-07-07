@@ -12,6 +12,7 @@ from shortform.bgm import (
 from shortform.captions import build_ass_from_scenes
 from shortform.editing_director import resolve_editing_plan
 from shortform.media_matcher import resolve_scene_media
+from shortform.motion import select_motion_scenes
 from shortform.polaroid import build_polaroid_scene_clip
 from shortform.renderer import assemble_with_transitions, build_scene_clip
 from shortform.split_screen import build_split_screen_scene_clip
@@ -31,7 +32,8 @@ DEFAULT_RENDER_CONFIG = {
 TRANSITION_DURATION_SEC = 0.5
 
 
-def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
+def render_script(script, out_path, asset_folder=None, work_dir="output/media",
+                  max_motion_scenes=2):
     work_dir = Path(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
 
@@ -50,7 +52,10 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media"):
     if audio_paths:
         filtered_scenes = [scene for scene in script.scenes if scene.index in audio_paths]
         filtered_script = Script(title=script.title, scenes=filtered_scenes)
-        scene_media = resolve_scene_media(filtered_script, asset_folder, work_dir / "generated")
+        scene_media = resolve_scene_media(
+            filtered_script, asset_folder, work_dir / "generated",
+            motion_indices=select_motion_scenes(filtered_scenes, max_motion_scenes),
+        )
     else:
         scene_media = {}
 
