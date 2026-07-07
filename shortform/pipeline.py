@@ -15,7 +15,12 @@ from shortform.editing_director import resolve_editing_plan
 from shortform.media_matcher import resolve_scene_media
 from shortform.motion import select_motion_scenes
 from shortform.polaroid import build_polaroid_scene_clip
-from shortform.renderer import assemble_with_transitions, build_scene_clip
+from shortform.renderer import (
+    CUT_RHYTHM_THRESHOLD_SEC,
+    assemble_with_transitions,
+    build_rhythm_cut_clip,
+    build_scene_clip,
+)
 from shortform.split_screen import build_split_screen_scene_clip
 from shortform.title_card import build_title_card_scene_clip
 from shortform.scene_schema import Script
@@ -97,6 +102,11 @@ def render_script(script, out_path, asset_folder=None, work_dir="output/media",
                         hook_text=scene.narration,
                         highlight_words=scene.highlight_words,
                         chips=scene.chips,
+                    )
+                elif duration >= CUT_RHYTHM_THRESHOLD_SEC:  # 긴 fullscreen → 컷 리듬
+                    build_rhythm_cut_clip(
+                        media.path, audio_paths[scene.index], duration, clip_path,
+                        pan_variant=scene.index,
                     )
                 else:  # fullscreen
                     build_scene_clip(

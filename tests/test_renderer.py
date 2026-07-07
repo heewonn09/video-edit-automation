@@ -91,6 +91,27 @@ def test_build_scene_clip_pan_variant_defaults_to_center_zoom(mock_run, tmp_path
     assert "z='min(zoom+0.0015,1.5)'" in filter_complex
 
 
+@patch("shortform.renderer.subprocess.run")
+def test_build_rhythm_cut_clip_hard_cuts_two_motions(mock_run, tmp_path):
+    from shortform.renderer import build_rhythm_cut_clip
+
+    out = tmp_path / "clip.mp4"
+    result = build_rhythm_cut_clip(tmp_path / "s.png", tmp_path / "a.mp3", 6.0, out, pan_variant=1)
+
+    cmd = mock_run.call_args[0][0]
+    fc = cmd[cmd.index("-filter_complex") + 1]
+    # 같은 소스를 둘로 나눠 서로 다른 모션 (variant 1: 좌→우 팬, variant 3: 줌아웃)
+    assert "split=2[src_a][src_b]" in fc
+    assert "(iw-iw/zoom)*on/" in fc                    # variant 1
+    assert "max(1.5-0.0015*on,1.15)" in fc             # variant 3 = (1+2)%4
+    # 각 브랜치는 절반 프레임(90)으로 트림 후 하드 컷 concat
+    assert fc.count("d=90:") == 2
+    assert "trim=end_frame=90" in fc
+    assert "concat=n=2:v=1:a=0[v]" in fc
+    assert "-t" in cmd and "6.0" in cmd
+    assert result == out
+
+
 def test_build_srt_from_scenes_uses_cumulative_timing():
     from shortform.renderer import build_srt_from_scenes
 

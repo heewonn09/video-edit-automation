@@ -381,6 +381,41 @@ def test_render_script_passes_motion_indices_to_media_resolution(
     assert mock_resolve.call_args.kwargs["motion_indices"] == set()
 
 
+@patch("shortform.pipeline.mix_bgm")
+@patch("shortform.pipeline.select_bgm_track")
+@patch("shortform.pipeline.assemble_with_transitions")
+@patch("shortform.pipeline.build_rhythm_cut_clip")
+@patch("shortform.pipeline.resolve_editing_plan")
+@patch("shortform.pipeline.build_ass_from_scenes")
+@patch("shortform.pipeline.resolve_scene_media")
+@patch("shortform.pipeline.get_audio_duration")
+@patch("shortform.pipeline.synthesize_narration")
+def test_render_script_uses_rhythm_cut_for_long_fullscreen_scene(
+    mock_tts, mock_duration, mock_resolve, mock_ass, mock_plan, mock_rhythm,
+    mock_assemble, mock_select, mock_mix, tmp_path
+):
+    script = Script(title="T", scenes=[Scene(1, "긴 나레이션", "골목길", 6.0)])
+    work_dir = tmp_path / "media"
+    mock_duration.return_value = 6.0                    # >= 임계 5.0초
+    mock_resolve.return_value = {1: SceneMedia(1, tmp_path / "s.png", "image")}
+    mock_ass.return_value = "ASS_TEXT"
+    mock_plan.return_value = [ScenePlan(layout="fullscreen", transition="fade")]
+    mock_rhythm.return_value = work_dir / "clip_01.mp4"
+    mock_assemble.return_value = work_dir / "pre_bgm.mp4"
+    mock_select.return_value = tmp_path / "t.mp3"
+    mock_mix.return_value = tmp_path / "final.mp4"
+
+    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir)
+
+    mock_rhythm.assert_called_once_with(
+        tmp_path / "s.png",
+        work_dir / "scene_01.mp3",
+        6.0,
+        work_dir / "clip_01.mp4",
+        pan_variant=1,
+    )
+
+
 @patch("shortform.pipeline.resolve_scene_media")
 @patch("shortform.pipeline.get_audio_duration")
 @patch("shortform.pipeline.synthesize_narration")

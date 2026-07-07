@@ -6,6 +6,21 @@ from shortform.sound_effects import generate_whoosh_sound
 
 SCALE_FILTER = "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920"
 
+# 이 길이 이상의 fullscreen 이미지 씬은 중간 하드 컷으로 템포를 만든다.
+CUT_RHYTHM_THRESHOLD_SEC = 5.0
+
+
+def _pan_exprs(variant, denom):
+    """켄번즈 팬 4종의 zoompan 수식 (z, x). y는 공통."""
+    variant = variant % 4
+    if variant == 1:
+        return "1.15", f"(iw-iw/zoom)*on/{denom}"
+    if variant == 2:
+        return "1.15", f"(iw-iw/zoom)*(1-on/{denom})"
+    if variant == 3:
+        return "max(1.5-0.0015*on,1.15)", "iw/2-(iw/zoom/2)"
+    return "min(zoom+0.0015,1.5)", "iw/2-(iw/zoom/2)"
+
 
 def build_scene_clip(media_path, media_type, audio_path, duration, out_path, pan_variant=0):
     media_path = str(media_path)
@@ -15,19 +30,7 @@ def build_scene_clip(media_path, media_type, audio_path, duration, out_path, pan
     if media_type == "image":
         frame_count = max(1, int(duration * 30))
         denom = max(frame_count - 1, 1)
-        variant = pan_variant % 4
-        if variant == 1:
-            z_expr = "1.15"
-            x_expr = f"(iw-iw/zoom)*on/{denom}"
-        elif variant == 2:
-            z_expr = "1.15"
-            x_expr = f"(iw-iw/zoom)*(1-on/{denom})"
-        elif variant == 3:
-            z_expr = "max(1.5-0.0015*on,1.15)"
-            x_expr = "iw/2-(iw/zoom/2)"
-        else:
-            z_expr = "min(zoom+0.0015,1.5)"
-            x_expr = "iw/2-(iw/zoom/2)"
+        z_expr, x_expr = _pan_exprs(pan_variant, denom)
         y_expr = "ih/2-(ih/zoom/2)"
 
         cmd = [
@@ -62,6 +65,51 @@ def build_scene_clip(media_path, media_type, audio_path, duration, out_path, pan
             str(out_path),
         ]
 
+    subprocess.run(cmd, capture_output=True, check=True)
+    return out_path
+
+
+def build_rhythm_cut_clip(media_path, audio_path, duration, out_path, pan_variant=0):
+    """긴 이미지 씬을 중간 하드 컷으로 나눠 서로 다른 카메라 모션 두 개를 잇는다.
+
+    같은 이미지의 점프컷 템포감 — 전반부는 pan_variant, 후반부는 반대 계열
+    모션((pan_variant+2)%4)으로 렌더 후 concat. 나레이션 오디오는 끊김 없이 이어진다.
+    """
+    media_path = str(media_path)
+    audio_path = str(audio_path)
+    out_path = Path(out_path)
+
+    half_frames = max(1, int(duration * 30 / 2))
+    denom = max(half_frames - 1, 1)
+    z_a, x_a = _pan_exprs(pan_variant, denom)
+    z_b, x_b = _pan_exprs(pan_variant + 2, denom)
+    y_expr = "ih/2-(ih/zoom/2)"
+
+    def branch(label_in, label_out, z, x):
+        return (
+            f"[{label_in}]zoompan=z='{z}':d={half_frames}:"
+            f"x='{x}':y='{y_expr}':s=1080x1920:fps=30,"
+            f"trim=end_frame={half_frames},setpts=PTS-STARTPTS,format=yuv420p[{label_out}]"
+        )
+
+    filter_complex = (
+        f"[0:v]{SCALE_FILTER},scale=8000:-2,split=2[src_a][src_b];"
+        f"{branch('src_a', 'va', z_a, x_a)};"
+        f"{branch('src_b', 'vb', z_b, x_b)};"
+        f"[va][vb]concat=n=2:v=1:a=0[v]"
+    )
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-loop", "1", "-i", media_path,
+        "-i", audio_path,
+        "-filter_complex", filter_complex,
+        "-map", "[v]", "-map", "1:a",
+        "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k",
+        "-t", str(duration),
+        str(out_path),
+    ]
     subprocess.run(cmd, capture_output=True, check=True)
     return out_path
 
