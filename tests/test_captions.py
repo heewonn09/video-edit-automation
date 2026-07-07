@@ -77,3 +77,57 @@ def test_build_ass_does_not_create_phantom_punctuation_only_phrases():
     assert ass.count("Dialogue:") == 2
     assert "정말..." in ass
     assert "그래요." in ass
+
+
+def test_build_ass_karaoke_uses_word_timings():
+    scenes = [Scene(1, "안녕하세요 여러분, 반갑습니다", "v", 4.0)]
+    timings = {1: [
+        {"text": "안녕하세요", "start": 0.1, "end": 0.8},
+        {"text": "여러분,", "start": 0.9, "end": 1.4},
+        {"text": "반갑습니다", "start": 1.6, "end": 2.4},
+    ]}
+    result = build_ass_from_scenes(scenes, [4.0], 0.5, word_timings=timings)
+    # 구절 1 "안녕하세요 여러분,": 첫 단어 (0.8-0.1)=70cs, 둘째 (1.4-0.8)=60cs
+    assert r"{\kf70}안녕하세요" in result
+    assert r"{\kf60}여러분," in result
+    # 구절 2 "반갑습니다": (2.4-1.6)=80cs
+    assert r"{\kf80}반갑습니다" in result
+    # 구절 시작 시각 = 첫 단어 start
+    assert "0:00:00.10" in result
+    assert "0:00:01.60" in result
+
+
+def test_build_ass_karaoke_highlights_keyword_word_gold():
+    scenes = [Scene(1, "무려 70만원 아꼈어요", "v", 3.0, highlight_words=["70만원"])]
+    timings = {1: [
+        {"text": "무려", "start": 0.0, "end": 0.4},
+        {"text": "70만원", "start": 0.5, "end": 1.1},
+        {"text": "아꼈어요", "start": 1.2, "end": 1.9},
+    ]}
+    result = build_ass_from_scenes(scenes, [3.0], 0.5, word_timings=timings)
+    assert r"\1c&H00D7FF&" in result
+    assert "70만원" in result
+    assert r"\kf" in result
+
+
+def test_build_ass_falls_back_when_word_count_mismatch():
+    scenes = [Scene(1, "어절 수가 다른 문장", "v", 4.0)]
+    timings = {1: [{"text": "어절", "start": 0.0, "end": 0.5}]}  # 1개 vs 실제 4어절
+    result = build_ass_from_scenes(scenes, [4.0], 0.5, word_timings=timings)
+    assert r"\kf" not in result   # 그 씬은 구절 비례 배분으로 폴백
+    assert "어절 수가 다른 문장" in result
+
+
+def test_build_ass_second_scene_words_offset_by_compressed_timeline():
+    scenes = [Scene(1, "첫 씬", "v", 4.0), Scene(2, "둘째 씬", "v", 4.0)]
+    timings = {
+        1: [{"text": "첫", "start": 0.0, "end": 0.5}, {"text": "씬", "start": 0.6, "end": 1.0}],
+        2: [{"text": "둘째", "start": 0.2, "end": 0.7}, {"text": "씬", "start": 0.8, "end": 1.2}],
+    }
+    result = build_ass_from_scenes(scenes, [4.0, 4.0], 0.5, word_timings=timings)
+    # 둘째 씬 시작 = 4.0 - 0.5(크로스페이드 압축) = 3.5 → 첫 단어 3.5+0.2=3.70
+    assert "0:00:03.70" in result
+
+
+def test_build_ass_karaoke_header_uses_dim_secondary_colour():
+    assert "&H00AAAAAA" in ASS_HEADER   # 아직 안 읽은 단어의 색 (카라오케 스윕 시작색)
