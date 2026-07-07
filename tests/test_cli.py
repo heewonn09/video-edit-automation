@@ -30,7 +30,7 @@ def test_cli_writes_script_json_and_renders_video(mock_generate, mock_render, tm
     assert mock_render.call_args[0][0] is script  # Script object
     assert mock_render.call_args[0][1] == Path("output") / f"{expected_slug}.mp4"  # output path
     assert mock_render.call_args[0][2] == "my_assets"  # assets path
-    assert mock_render.call_args.kwargs["max_motion_scenes"] == 2  # default
+    assert mock_render.call_args.kwargs["max_motion_scenes"] == 0  # 기본 꺼짐 (Veo 비용 0)
 
     captured = capsys.readouterr()
     assert "테스트 제목" in captured.out
@@ -45,9 +45,9 @@ def test_cli_motion_scenes_flag_threads_through(mock_generate, mock_render, tmp_
     mock_generate.return_value = Script(title="T", scenes=[Scene(1, "n", "v", 4.0)])
     mock_render.return_value = tmp_path / "out.mp4"
 
-    main(["--topic", "주제", "--motion-scenes", "0"])
+    main(["--topic", "주제", "--motion-scenes", "2"])   # 특수한 경우에만 명시적으로 켬
 
-    assert mock_render.call_args.kwargs["max_motion_scenes"] == 0
+    assert mock_render.call_args.kwargs["max_motion_scenes"] == 2
 
 
 def test_cli_requires_topic_or_url(capsys):

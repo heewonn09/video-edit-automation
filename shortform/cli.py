@@ -19,7 +19,7 @@ def _slugify(title: str) -> str:
     return slug[:40] or "script"
 
 
-def _process_one(raw_input: str, assets, motion_scenes=2):
+def _process_one(raw_input: str, assets, motion_scenes=0):
     script = generate_script(raw_input)
 
     out_dir = Path("output") / "scripts"
@@ -54,8 +54,8 @@ def main(argv=None):
     group.add_argument("--url", help="크롤링할 URL")
     group.add_argument("--batch", help="주제/URL을 한 줄씩 적은 파일 경로 (순차 처리)")
     parser.add_argument("--assets", default=None, help="씬 매칭에 사용할 로컬 자산 폴더 (선택)")
-    parser.add_argument("--motion-scenes", type=int, default=2,
-                        help="Veo AI 영상으로 만들 최대 씬 수 (0=끔, 기본 2 — 비용 주의)")
+    parser.add_argument("--motion-scenes", type=int, default=0,
+                        help="Veo AI 영상으로 만들 최대 씬 수 (기본 0=끔 — 특수한 경우에만, 클립당 초 단위 과금 주의)")
     args = parser.parse_args(argv)
 
     if args.batch:

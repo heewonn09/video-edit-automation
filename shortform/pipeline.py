@@ -33,7 +33,7 @@ TRANSITION_DURATION_SEC = 0.5
 
 
 def render_script(script, out_path, asset_folder=None, work_dir="output/media",
-                  max_motion_scenes=2):
+                  max_motion_scenes=0):
     work_dir = Path(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
 

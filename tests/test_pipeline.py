@@ -336,13 +336,13 @@ def test_render_script_passes_motion_indices_to_media_resolution(
     mock_select.return_value = tmp_path / "t.mp3"
     mock_mix.return_value = tmp_path / "final.mp4"
 
-    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir)
-
+    # 특수한 경우에만 명시적으로 켠다 (기본값은 0=꺼짐)
+    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir,
+                  max_motion_scenes=2)
     assert mock_resolve.call_args.kwargs["motion_indices"] == {2, 3}
 
-    # max_motion_scenes=0 disables motion entirely
-    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir,
-                  max_motion_scenes=0)
+    # 기본값: 모션 꺼짐 — Veo 비용 0
+    render_script(script, tmp_path / "final.mp4", asset_folder=None, work_dir=work_dir)
     assert mock_resolve.call_args.kwargs["motion_indices"] == set()
 
 
